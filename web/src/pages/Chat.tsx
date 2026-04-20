@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { MessageBubble } from "@/components/chat/MessageBubble";
-import { TypingDots } from "@/components/chat/TypingDots";
 import { QuickStartChips } from "@/components/chat/QuickStartChips";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { RateLimitCard } from "@/components/chat/RateLimitCard";
+import { ChatStream } from "@/components/chat/ChatStream";
 import { useAuth } from "@/hooks/useAuth";
 import { useChat } from "@/hooks/useChat";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -23,6 +23,9 @@ export default function Chat() {
     newChat,
     removeChat,
     send,
+    streamRequest,
+    onStreamComplete,
+    onStreamError,
     isResponding,
     remaining,
     quota,
@@ -129,14 +132,17 @@ export default function Chat() {
               {active.messages.map((m) => (
                 <MessageBubble key={m.id} message={m} />
               ))}
-              {isResponding && (
-                <div className="flex justify-start">
-                  <div className="rounded-3xl rounded-tl-md bg-card px-4 py-2 shadow-sm ring-1 ring-border/50">
-                    <TypingDots />
-                  </div>
-                </div>
+              {streamRequest && (
+                <ChatStream
+                  request={streamRequest}
+                  userId={user?.phone ?? ""}
+                  plan={user?.plan ?? "free"}
+                  usageCount={usage}
+                  onComplete={onStreamComplete}
+                  onError={onStreamError}
+                />
               )}
-              {limitReached && (
+              {limitReached && !streamRequest && (
                 <RateLimitCard used={quota} plan={user?.plan ?? "free"} />
               )}
             </div>

@@ -7,6 +7,7 @@ import {
   mockVerifyOtp,
   setUser,
 } from "@/lib/auth";
+import { ApiService } from "@/services/api";
 
 /** Reactive auth state hook. */
 export function useAuth() {
@@ -29,15 +30,27 @@ export function useAuth() {
   const verifyOtp = useCallback(async (phone: string, code: string) => {
     const u = await mockVerifyOtp(phone, code);
     setUserState(u);
+    try {
+      await ApiService.registerUser({ phone });
+    } catch (e) {
+      console.error("Register API err", e);
+    }
     return u;
   }, []);
 
-  const updateUser = useCallback((patch: Partial<JavaabUser>) => {
+  const updateUser = useCallback(async (patch: Partial<JavaabUser>) => {
     const cur = getUser();
     if (!cur) return;
     const next = { ...cur, ...patch };
     setUser(next);
     setUserState(next);
+    
+    // Attempt profile update. We fail silently to allow fallback logic in Onboarding.
+    try {
+      await ApiService.updateProfile(next);
+    } catch (e) {
+      console.error("Profile API err", e);
+    }
   }, []);
 
   const logout = useCallback(() => {

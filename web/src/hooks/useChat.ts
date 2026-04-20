@@ -8,10 +8,12 @@ import {
   deleteConversation,
   getUsage,
   loadConversations,
+  updateMessage,
   PLAN_QUOTAS,
+  type Confidence,
 } from "@/lib/chat";
-import { fakeLatencyMs, pickReply } from "@/lib/mockAI";
 import { useAuth } from "./useAuth";
+import { ChatStreamRequest } from "@/components/chat/ChatStream";
 
 /** Reactive chat state for the current authed user. */
 export function useChat() {
@@ -22,6 +24,7 @@ export function useChat() {
   );
   const [activeId, setActiveId] = useState<string | null>(null);
   const [usage, setUsage] = useState<number>(() => (phone ? getUsage(phone) : 0));
+  const [streamRequest, setStreamRequest] = useState<ChatStreamRequest | null>(null);
   const [isResponding, setIsResponding] = useState(false);
 
   // Sync from storage on cross-tab edits
@@ -61,6 +64,8 @@ export function useChat() {
     [phone, activeId],
   );
 
+  const active = conversations.find((c) => c.id === activeId) ?? null;
+
   const send = useCallback(
     async (text: string, imageUrl?: string) => {
       if (!phone || !text.trim() || isResponding) return;
@@ -89,27 +94,38 @@ export function useChat() {
       appendMessage(phone, convId, userMsg);
       const newUsage = bumpUsage(phone);
       setUsage(newUsage);
+      setIsResponding(true);
       setConversations(loadConversations(phone));
 
-      setIsResponding(true);
-      await new Promise((r) => setTimeout(r, fakeLatencyMs()));
-      const reply = pickReply(text, { name: user?.name, isFirstReply });
-      const aiMsg: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: reply.content,
-        createdAt: Date.now(),
-        confidence: reply.confidence,
-        source: reply.source,
-      };
-      appendMessage(phone, convId, aiMsg);
-      setConversations(loadConversations(phone));
-      setIsResponding(false);
+      setStreamRequest({
+        query: text.trim(),
+        imageBase64: imageUrl,
+        board: user?.board || "cbse",
+        classLevel: user?.classNum || 10,
+        subject: active?.subject || "general",
+        language: user?.languages?.[0] || "en",
+      });
     },
-    [phone, activeId, conversations, isResponding, limitReached, user?.name],
+    [phone, activeId, conversations, isResponding, limitReached, user, active?.subject],
   );
 
-  const active = conversations.find((c) => c.id === activeId) ?? null;
+  const onStreamComplete = useCallback(
+    (msg: ChatMessage) => {
+      if (!phone || !activeId) return;
+      appendMessage(phone, activeId, msg);
+      setConversations(loadConversations(phone));
+      setStreamRequest(null);
+      setIsResponding(false);
+    },
+    [phone, activeId]
+  );
+
+  const onStreamError = useCallback((err: Error) => {
+    console.error("Stream Error", err);
+    // Ideally we can inject an error message bubble if we want, or rely on ChatStream showing retry.
+    setIsResponding(false);
+    setStreamRequest(null);
+  }, []);
 
   return {
     conversations,
@@ -119,6 +135,10 @@ export function useChat() {
     newChat,
     removeChat,
     send,
+    streamRequest,
+    onStreamComplete,
+    onStreamError,
+    setStreamRequest,
     isResponding,
     usage,
     quota,

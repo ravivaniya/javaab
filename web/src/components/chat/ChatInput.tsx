@@ -15,14 +15,16 @@ interface Props {
 export function ChatInput({ onSend, disabled, isPaid, placeholder }: Props) {
   const [text, setText] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const submit = () => {
     if (!text.trim() || disabled) return;
-    onSend(text, imageUrl ?? undefined);
+    onSend(text, imageBase64 || undefined);
     setText("");
     setImageUrl(null);
+    setImageBase64(null);
   };
 
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -40,11 +42,20 @@ export function ChatInput({ onSend, disabled, isPaid, placeholder }: Props) {
     fileRef.current?.click();
   };
 
-  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
     setImageUrl(url);
+    
+    try {
+      const { ApiService } = await import("@/services/api");
+      const base64 = await ApiService.compressImageToBase64(file);
+      setImageBase64(base64);
+    } catch (err) {
+      console.error("Failed to compress image", err);
+    }
+    
     e.target.value = "";
   };
 
@@ -66,7 +77,10 @@ export function ChatInput({ onSend, disabled, isPaid, placeholder }: Props) {
                 className="h-16 w-16 rounded-xl object-cover"
               />
               <button
-                onClick={() => setImageUrl(null)}
+                onClick={() => {
+                  setImageUrl(null);
+                  setImageBase64(null);
+                }}
                 className="absolute -right-1.5 -top-1.5 rounded-full bg-foreground text-background"
                 aria-label="Remove image"
               >

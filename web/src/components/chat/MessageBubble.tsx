@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { BookOpen, ChevronDown, ThumbsDown, ThumbsUp, ShieldCheck, Sparkles, AlertTriangle } from "lucide-react";
 import { ChatMessage } from "@/lib/chat";
-import { Markdown } from "./Markdown";
+import { MarkdownWithMath } from "./MarkdownWithMath";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { TypingDots } from "./TypingDots";
+import { ApiService } from "@/services/api";
 
 interface Props {
   message: ChatMessage;
@@ -31,6 +33,15 @@ export function MessageBubble({ message }: Props) {
   const [showSource, setShowSource] = useState(false);
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
 
+  const handleFeedback = (type: "up" | "down") => {
+    if (feedback === type) {
+      setFeedback(null);
+    } else {
+      setFeedback(type);
+      ApiService.sendFeedback(message.id, type === "up").catch(console.error);
+    }
+  };
+
   if (message.role === "user") {
     return (
       <div className="flex w-full justify-end">
@@ -53,9 +64,11 @@ export function MessageBubble({ message }: Props) {
   return (
     <div className="flex w-full justify-start">
       <div className="max-w-[92%] space-y-3 rounded-3xl rounded-tl-md bg-card px-5 py-4 shadow-sm ring-1 ring-border/50 sm:max-w-[80%]">
-        <Markdown>{message.content}</Markdown>
+        {!message.content ? <TypingDots /> : <MarkdownWithMath>{message.content}</MarkdownWithMath>}
 
-        <div className="flex flex-wrap items-center gap-2 pt-1">
+        {message.content && (
+        <>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
           {message.source && (
             <button
               onClick={() => setShowSource((v) => !v)}
@@ -84,7 +97,7 @@ export function MessageBubble({ message }: Props) {
               variant="ghost"
               size="icon"
               className={cn("h-7 w-7", feedback === "up" && "text-primary")}
-              onClick={() => setFeedback(feedback === "up" ? null : "up")}
+              onClick={() => handleFeedback("up")}
               aria-label="Helpful"
             >
               <ThumbsUp className="h-3.5 w-3.5" />
@@ -93,7 +106,7 @@ export function MessageBubble({ message }: Props) {
               variant="ghost"
               size="icon"
               className={cn("h-7 w-7", feedback === "down" && "text-destructive")}
-              onClick={() => setFeedback(feedback === "down" ? null : "down")}
+              onClick={() => handleFeedback("down")}
               aria-label="Not helpful"
             >
               <ThumbsDown className="h-3.5 w-3.5" />
@@ -106,6 +119,8 @@ export function MessageBubble({ message }: Props) {
             <p className="font-semibold text-foreground">{message.source.book}</p>
             <p>{message.source.chapter}</p>
           </div>
+        )}
+        </>
         )}
       </div>
     </div>

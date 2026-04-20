@@ -21,10 +21,10 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   chaptersFor,
   getSubjectProgress,
-  subjectsForBoard,
   type SubjectKey,
   type SubjectMeta,
 } from "@/lib/subjects";
+import { ApiService } from "@/services/api";
 import type { Board } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -40,7 +40,36 @@ export default function Subjects() {
 
   const activeSubjectKey = (params.get("s") as SubjectKey | null) ?? null;
 
-  const subjects = useMemo(() => subjectsForBoard(board), [board]);
+  const [subjects, setSubjects] = useState<SubjectMeta[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load subjects dynamically
+  useMemo(() => {
+    let active = true;
+    setLoading(true);
+    ApiService.getSubjects(board, classNum)
+      .then((data: Record<string, unknown> | unknown[]) => {
+        if (!active) return;
+        // Fallback to empty array if backend doesn't return proper data structure yet
+        if (Array.isArray(data)) {
+          setSubjects(data as SubjectMeta[]);
+        } else if (data && Array.isArray((data as any).subjects)) {
+          setSubjects((data as any).subjects as SubjectMeta[]);
+        } else {
+          setSubjects([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load subjects:", err);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [board, classNum]);
+
   const activeSubject = subjects.find((s) => s.key === activeSubjectKey) ?? null;
 
   const totalAnswered = useMemo(
