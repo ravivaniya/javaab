@@ -2,7 +2,7 @@
 ## Complete Technical Plan V1
 ### Products: Javaab AI (Chat) + Javaab API (Developer Platform)
 ### Class 6–12 | NCERT (CBSE) + GSEB (Gujarat) | English, Hindi, Gujarati
-### Azure Cloud | Next.js | React Native | Swiggy-Style Design
+### Azure Cloud | Vite (React SPA) | React Native | Swiggy-Style Design
 
 ---
 
@@ -43,7 +43,7 @@
 **Part C — Features**
 
 21. [Master System Prompt](#21-master-system-prompt)
-22. [Frontend Architecture (Next.js + React Native)](#22-frontend-architecture)
+22. [Frontend Architecture (Vite + React Native)](#22-frontend-architecture)
 23. [API Design](#23-api-design)
 24. [Custom Plan — Coaching/School Features](#24-custom-plan)
 25. [Javaab API — Developer Platform (Future)](#25-javaab-api)
@@ -78,7 +78,7 @@ An AI-powered educational assistant that:
 - Accepts **text** (typed) or **image** (photo of textbook/notebook) input
 - Understands questions in **English, Hindi, and Gujarati** — in both native scripts (Devanagari, Gujarati) AND Roman/transliterated script
 - Returns **curriculum-aligned, step-by-step answers** grounded in actual NCERT and GSEB textbook content
-- Works on **mobile** (React Native) and **web** (Next.js)
+- Works on **mobile** (React Native) and **web** (Vite + React)
 - Runs entirely on **Microsoft Azure**
 
 ### Non-Negotiables
@@ -696,7 +696,7 @@ FORMULA 7: Customer Acquisition Cost (CAC) vs LTV
 | Layer | Service | Tier | Monthly Cost | Notes |
 |-------|---------|------|-------------|-------|
 | **DNS/CDN** | Cloudflare | Free | $0 | DDoS, SSL, caching |
-| **Web App** | Azure Static Web Apps + Next.js | Free→Standard | $0→$9 | app.tryjavaab.com |
+| **Web App** | Azure Static Web Apps + Vite | Free→Standard | $0→$9 | app.tryjavaab.com |
 | **Mobile** | React Native (Expo) | N/A | $0 | Client-side |
 | **API Gateway** | Azure API Management | Consumption | ~$4/1M calls | Rate limiting, auth |
 | **Backend** | Azure Container Apps | Consumption | ~$0→$50 | Auto-scale to zero |
@@ -1183,7 +1183,7 @@ tryjavaab.com                 → Marketing website
   /technology              → Tech stack / how it works
   /contact                 → Contact page
 
-app.tryjavaab.com            → Javaab AI web app (Next.js)
+app.tryjavaab.com            → Javaab AI web app (Vite + React)
   /login                   → Auth
   /onboarding              → First-time setup
   /                        → Main chat interface (default)
@@ -1348,7 +1348,7 @@ INTERACTION STYLE
 
 ---
 
-## 22. Frontend Architecture (Next.js + React Native)
+## 22. Frontend Architecture (Vite + React Native)
 
 ### Shared Design System
 
@@ -1366,7 +1366,7 @@ INTERACTION STYLE
 └── ThemeProvider (light/dark, Noto Sans Devanagari + Gujarati fonts)
 ```
 
-### Next.js Web App (app.tryjavaab.com)
+### Vite Web App (app.tryjavaab.com)
 
 ```
 /app
@@ -1614,7 +1614,7 @@ WHY NOT NOW:
 |------|------|-------------|
 | 1-2 | Knowledge base build (PDF extract, chunk, embed, index) | Azure AI Search ready |
 | 3-4 | Backend API (FastAPI, model router, RAG, cache, auth) | Working /chat/ask |
-| 5-6 | Web app (Next.js on app.tryjavaab.com, Swiggy-style design) | Live web chat |
+| 5-6 | Web app (Vite on app.tryjavaab.com, Swiggy-style design) | Live web chat |
 | 7-8 | Mobile app (React Native), payment (Razorpay), referral system | Mobile beta |
 | 9-10 | Teacher portal, tickets, verified cache (5,000 answers) | Admin ready |
 | 11-12 | Testing, beta (50 students), bug fixes, launch | **🚀 LAUNCH** |
@@ -1836,7 +1836,7 @@ Gujarati in both native scripts and Roman transliteration.
 
 ## Tech Stack
 - Backend: Python 3.12, FastAPI, uvicorn, async everywhere
-- Web Frontend: Next.js 16+ (App Router), TypeScript, React, Tailwind CSS, framer-motion (for smooth micro-animations), lucide-react (for icons), shadcn/ui
+- Web Frontend: Vite (React SPA), TypeScript, React, Tailwind CSS, framer-motion (for smooth micro-animations), lucide-react (for icons), shadcn/ui
 - UI/UX Guidelines: Swiggy-inspired mobile-first design, clean aesthetics, visually premium with vibrant colors (Orange `#FC8019`, Green `#10B981`, Purple `#8B5CF6`)
 - Mobile: React Native with Expo (managed workflow)
 - Database: Azure Cosmos DB (free tier, serverless)
@@ -2251,7 +2251,7 @@ Folder structure within the export:
   /app/(main)/refer         → L8 referral
   /app/(main)/settings      → settings shell
 
-Ensure all internal links use Next.js <Link> components.
+Ensure all internal links use React Router <Link> components.
 All ?plan= query params are read and stored in sessionStorage
 during auth so they survive the OTP verification redirect.
 
@@ -2615,7 +2615,7 @@ Usage:
 #### PROMPT C11: Import Lovable UI + Connect APIs
 
 ```
-@agent Connect the Lovable Next.js frontend (/web) to the FastAPI backend.
+@agent Connect the Lovable Vite frontend (/web) to the FastAPI backend.
 
 1. API client service (web/src/services/api.ts):
    - Base URL from environment variable
@@ -2641,7 +2641,7 @@ Usage:
    - Create MarkdownWithMath component
    - Test: \( x = \frac{-b \pm \sqrt{b^2-4ac}}{2a} \)
 
-7. Add i18n (next-intl): locale files en.json, hi.json, gu.json
+7. Add i18n (react-i18next): locale files en.json, hi.json, gu.json
 
 8. Font setup: Noto Sans + Noto Sans Devanagari + Noto Sans Gujarati
 ```
@@ -2781,7 +2781,7 @@ Then clone into the /mobile directory of the main Javaab monorepo in Cursor.
 #### PROMPT C13: Teacher Admin Portal
 
 ```
-@agent Build the Teacher Admin Portal in Next.js.
+@agent Build the Teacher Admin Portal in Vite.
 
 Route: /admin/teacher (protected — role="teacher" only)
 
@@ -2833,7 +2833,7 @@ Keep UI clean and efficient (shadcn/ui). Mobile-responsive (teachers use phones)
 
    .github/workflows/web-deploy.yml:
    - Trigger: push to main, changes in /web/**
-   - Build Next.js, deploy to Azure Static Web Apps
+   - Build Vite (React SPA), deploy to Azure Static Web Apps
 
 3. AZURE INFRASTRUCTURE SCRIPT (scripts/setup_azure.sh):
 
