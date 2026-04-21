@@ -66,13 +66,14 @@ class CacheService:
         )
         
         # Redis Client
-        redis_host = os.getenv("REDIS_HOST", "localhost")
-        redis_port = int(os.getenv("REDIS_PORT", "6379"))
-        redis_password = os.getenv("REDIS_PASSWORD", None)
+        redis_host = os.getenv("AZURE_REDIS_HOST", "localhost")
+        redis_port = int(os.getenv("AZURE_REDIS_PORT", "6380" if os.getenv("AZURE_REDIS_HOST") else "6379"))
+        redis_password = os.getenv("AZURE_REDIS_KEY", None)
         self.redis_client = redis.Redis(
             host=redis_host, 
             port=redis_port, 
             password=redis_password,
+            ssl=(redis_port == 6380),
             decode_responses=True
         )
 
