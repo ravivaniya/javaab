@@ -11,21 +11,26 @@ interface StruggleStepProps {
 }
 
 const STRUGGLES: { id: StudyStruggle; label: string; emoji: string }[] = [
-  { id: "forget_later", label: "I understand in class but forget later", emoji: "😵" },
+  { id: "forget_later", label: "I understand in class but forget later", emoji: "🧠" },
   { id: "dont_understand", label: "I don't understand the concept at all", emoji: "🤔" },
-  { id: "cant_solve", label: "I understand it but can't solve numericals or problems", emoji: "😤" },
-  { id: "cant_write", label: "I know it but can't write proper exam answers", emoji: "📝" },
-  { id: "run_out_of_time", label: "I run out of time in exams", emoji: "🕐" },
+  { id: "cant_solve", label: "I understand it but can't solve numericals or problems", emoji: "🧮" },
+  { id: "cant_write", label: "I know it but can't write proper exam answers", emoji: "✍️" },
+  { id: "run_out_of_time", label: "I run out of time in exams", emoji: "⏱️" },
 ];
 
 const INPUT_MODES: { id: InputMode; label: string; emoji: string; comingSoon?: boolean }[] = [
   { id: "type", label: "I'll type my doubts", emoji: "⌨️" },
   { id: "photo", label: "I'll photograph my textbook / notebook", emoji: "📸" },
-  { id: "voice", label: "I'd prefer to speak", emoji: "🎤", comingSoon: true },
+  { id: "voice", label: "I'd prefer to speak", emoji: "🎙️", comingSoon: true },
 ];
 
 /** Onboarding Step 5 — biggest struggle + preferred input mode. */
-export function StruggleStep({ value, inputMode, onSelectStruggle, onSelectInput }: StruggleStepProps) {
+export function StruggleStep({
+  value,
+  inputMode,
+  onSelectStruggle,
+  onSelectInput,
+}: StruggleStepProps) {
   return (
     <div className="space-y-6">
       <header className="space-y-2">
@@ -78,9 +83,18 @@ function InputModeSlot({
   const [height, setHeight] = useState(0);
 
   useEffect(() => {
-    if (open && innerRef.current) setHeight(innerRef.current.scrollHeight);
-    else setHeight(0);
-  }, [open]);
+    if (!open) {
+      setHeight(0);
+      return;
+    }
+    const update = () =>
+      innerRef.current && setHeight(innerRef.current.scrollHeight);
+    update();
+    // Re-measure when input mode chips re-render (selected state changes size slightly).
+    const ro = innerRef.current ? new ResizeObserver(update) : null;
+    if (innerRef.current && ro) ro.observe(innerRef.current);
+    return () => ro?.disconnect();
+  }, [open, inputMode]);
 
   return (
     <div

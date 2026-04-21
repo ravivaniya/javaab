@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 
 interface OtpStepProps {
   phone: string;
@@ -23,6 +27,13 @@ export function OtpStep({ phone, onVerify, onResend, onBack }: OtpStepProps) {
   const [loading, setLoading] = useState(false);
   const [seconds, setSeconds] = useState(45);
   const [resending, setResending] = useState(false);
+  const otpRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Autofocus the OTP input when this step mounts
+    const t = setTimeout(() => otpRef.current?.focus(), 80);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (seconds <= 0) return;
@@ -73,16 +84,18 @@ export function OtpStep({ phone, onVerify, onResend, onBack }: OtpStepProps) {
           Enter the OTP
         </h2>
         <p className="text-base text-muted-foreground">
-          Sent to <span className="font-semibold text-foreground">{maskPhone(phone)}</span>
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Demo OTP: <span className="font-mono font-semibold">123456</span>
+          Sent to{" "}
+          <span className="font-semibold text-foreground">
+            {maskPhone(phone)}
+          </span>
         </p>
       </header>
 
       <div className="space-y-3">
         <InputOTP
+          ref={otpRef}
           maxLength={6}
+          autoFocus
           value={code}
           onChange={(v) => {
             setCode(v);
@@ -106,7 +119,10 @@ export function OtpStep({ phone, onVerify, onResend, onBack }: OtpStepProps) {
         <div className="text-sm">
           {seconds > 0 ? (
             <span className="text-muted-foreground">
-              Resend OTP in <span className="font-mono font-semibold text-foreground">{mm}:{ss}</span>
+              Resend OTP in{" "}
+              <span className="font-mono font-semibold text-foreground">
+                {mm}:{ss}
+              </span>
             </span>
           ) : (
             <button

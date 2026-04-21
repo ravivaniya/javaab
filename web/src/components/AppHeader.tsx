@@ -1,5 +1,12 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Gift, LogOut, MessageSquare, Settings, Sparkles, Ticket } from "lucide-react";
+import {
+  ArrowLeft,
+  Gift,
+  LogOut,
+  Settings,
+  Sparkles,
+  Ticket,
+} from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -16,27 +23,28 @@ import { cn } from "@/lib/utils";
 interface Props {
   /** Show a back-to-chat link instead of the nav. */
   showBack?: boolean;
+  /** Optional left-side slot (e.g. mobile sidebar trigger on /chat). */
+  leftSlot?: React.ReactNode;
+  /** Optional right-side slot before account controls. */
+  rightSlot?: React.ReactNode;
 }
-
-const NAV = [
-  { to: "/chat", label: "Chat", icon: MessageSquare },
-  { to: "/subjects", label: "Subjects", icon: BookOpen },
-  { to: "/tickets", label: "Tickets", icon: Ticket },
-];
 
 const PLAN_CLS: Record<string, string> = {
   free: "bg-muted text-muted-foreground",
   plus: "bg-[hsl(var(--plus))]/15 text-[hsl(var(--plus))]",
-  pro:  "bg-[hsl(var(--pro))]/15 text-[hsl(var(--pro))]",
+  pro: "bg-[hsl(var(--pro))]/15 text-[hsl(var(--pro))]",
 };
 
-/** Top nav for the non-chat app pages (Subjects/Tickets/Refer/Settings). */
-export function AppHeader({ showBack = false }: Props) {
+/** Single source of truth for the top header across every page. */
+export function AppHeader({ showBack = false, leftSlot, rightSlot }: Props) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const planLabel = (user?.plan ?? "free").toUpperCase();
-  const initials = user?.phone?.slice(-2) ?? "JV";
+  const initials =
+    (user?.name ?? "").trim().charAt(0).toUpperCase() ||
+    user?.phone?.slice(-2) ||
+    "JV";
   const isFree = (user?.plan ?? "free") === "free";
 
   const handleLogout = () => {
@@ -46,43 +54,42 @@ export function AppHeader({ showBack = false }: Props) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
-        <div className="flex items-center gap-3">
+      <div className="mx-auto flex h-14 items-center justify-between gap-2 px-3 sm:gap-3 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          {leftSlot}
           {showBack ? (
             <Link
               to="/chat"
               className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              <span className="hidden sm:inline">Back</span>
             </Link>
           ) : (
-            <Logo />
+            <Link to="/chat" aria-label="Go to chat" className="shrink-0">
+              <Logo />
+            </Link>
           )}
         </div>
 
+        {/* Tickets nav (single remaining secondary route) */}
         <nav className="hidden items-center gap-1 md:flex">
-          {NAV.map(({ to, label, icon: Icon }) => {
-            const active = pathname === to || pathname.startsWith(`${to}/`);
-            return (
-              <Link
-                key={to}
-                to={to}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </Link>
-            );
-          })}
+          <Link
+            to="/tickets"
+            className={cn(
+              "flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-sm font-medium transition-colors",
+              pathname === "/tickets" || pathname.startsWith("/tickets/")
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            <Ticket className="h-4 w-4" />
+            Tickets
+          </Link>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {rightSlot}
           {isFree && (
             <Link
               to="/subscribe"
@@ -94,7 +101,7 @@ export function AppHeader({ showBack = false }: Props) {
           )}
           <span
             className={cn(
-              "rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide",
+              "hidden rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide sm:inline-block",
               PLAN_CLS[user?.plan ?? "free"],
             )}
           >
@@ -102,16 +109,18 @@ export function AppHeader({ showBack = false }: Props) {
           </span>
           <DropdownMenu>
             <DropdownMenuTrigger className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+              <Avatar className="h-9 w-9 cursor-pointer">
+                <AvatarFallback className="bg-primary text-sm font-black text-primary-foreground">
                   {initials}
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52 rounded-2xl">
+            <DropdownMenuContent align="end" className="w-56 rounded-2xl">
               <DropdownMenuLabel className="font-normal">
                 <p className="text-xs text-muted-foreground">Signed in as</p>
-                <p className="font-semibold">+91 {user?.phone}</p>
+                <p className="font-semibold">
+                  {user?.name || `+91 ${user?.phone ?? ""}`}
+                </p>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
@@ -121,44 +130,30 @@ export function AppHeader({ showBack = false }: Props) {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/settings/subscription" className="cursor-pointer">
-                  <Settings className="h-4 w-4" /> Subscription
+                  <Sparkles className="h-4 w-4" /> Subscription
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/tickets" className="cursor-pointer md:hidden">
+                  <Ticket className="h-4 w-4" /> Tickets
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/refer" className="cursor-pointer">
-                  <Gift className="h-4 w-4" /> Refer & earn
+                  <Gift className="h-4 w-4" /> Refer &amp; earn
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="cursor-pointer text-destructive focus:text-destructive"
+              >
                 <LogOut className="h-4 w-4" /> Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
-
-      {/* Mobile bottom-style inline nav */}
-      <nav className="flex items-center gap-1 border-t border-border px-3 py-2 md:hidden">
-        {NAV.map(({ to, label, icon: Icon }) => {
-          const active = pathname === to || pathname.startsWith(`${to}/`);
-          return (
-            <Link
-              key={to}
-              to={to}
-              className={cn(
-                "flex flex-1 items-center justify-center gap-1.5 rounded-pill px-2 py-1.5 text-xs font-semibold transition-colors",
-                active
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-muted",
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
     </header>
   );
 }

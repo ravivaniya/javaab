@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import logging
 
-from app.routes import chat, auth, subjects, tickets, admin
+from app.routes import chat, auth, subjects, tickets, admin, student
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -51,6 +51,7 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(subjects.router, prefix="/subjects", tags=["subjects"])
 app.include_router(tickets.router, prefix="/tickets", tags=["tickets"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
+app.include_router(student.router, prefix="/student", tags=["student"])
 
 @app.get("/health", tags=["system"])
 async def health_check():

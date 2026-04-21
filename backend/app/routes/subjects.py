@@ -10,6 +10,14 @@ async def list_subjects():
     # TODO: Implement subject listing via CosmosDB or Search
     return {"subjects": []}
 
+@router.get("/{board}/{class_level}")
+async def list_subjects_for_class(board: str, class_level: int):
+    """
+    Browse subjects for a board and class.
+    """
+    # TODO: Implement subject listing via CosmosDB or Search
+    return {"board": board, "class_level": class_level, "subjects": []}
+
 @router.get("/{subject_id}/chapters")
 async def list_chapters(subject_id: str):
     """

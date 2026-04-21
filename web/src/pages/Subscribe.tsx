@@ -93,7 +93,8 @@ export default function Subscribe() {
             Pricing
           </div>
           <h1 className="font-display text-4xl font-black leading-[1.05] sm:text-5xl">
-            Less doubt.<br className="sm:hidden" /> More marks.
+            Less doubt.
+            <br className="sm:hidden" /> More marks.
           </h1>
           <p className="mx-auto mt-3 max-w-lg text-muted-foreground">
             Pick a plan that fits how you study. Cancel anytime — no fine print.
@@ -120,9 +121,18 @@ export default function Subscribe() {
         {/* Trust strip */}
         <div className="mt-10 grid gap-4 rounded-3xl border border-border bg-card p-6 sm:grid-cols-3">
           {[
-            { t: "Cancel anytime", d: "Stop whenever, keep access till period end." },
-            { t: "UPI & cards", d: "Pay via any UPI app or card — secured by Razorpay." },
-            { t: "7-day refund", d: "Not loving it? Email us within 7 days for a full refund." },
+            {
+              t: "Cancel anytime",
+              d: "Stop whenever, keep access till period end.",
+            },
+            {
+              t: "UPI & cards",
+              d: "Pay via any UPI app or card — secured by Razorpay.",
+            },
+            {
+              t: "7-day refund",
+              d: "Not loving it? Email us within 7 days for a full refund.",
+            },
           ].map((x) => (
             <div key={x.t}>
               <p className="font-display text-lg font-bold">{x.t}</p>
@@ -133,10 +143,15 @@ export default function Subscribe() {
 
         {/* FAQ */}
         <section className="mt-12">
-          <h2 className="mb-5 font-display text-2xl font-black">Quick answers</h2>
+          <h2 className="mb-5 font-display text-2xl font-black">
+            Quick answers
+          </h2>
           <div className="grid gap-4 md:grid-cols-2">
             {FAQS.map((f) => (
-              <div key={f.q} className="rounded-2xl border border-border bg-card p-5">
+              <div
+                key={f.q}
+                className="rounded-2xl border border-border bg-card p-5"
+              >
                 <p className="font-display font-bold">{f.q}</p>
                 <p className="mt-1.5 text-sm text-muted-foreground">{f.a}</p>
               </div>

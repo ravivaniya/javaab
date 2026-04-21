@@ -8,12 +8,10 @@ import {
   deleteConversation,
   getUsage,
   loadConversations,
-  updateMessage,
   PLAN_QUOTAS,
-  type Confidence,
 } from "@/lib/chat";
 import { useAuth } from "./useAuth";
-import { ChatStreamRequest } from "@/components/chat/ChatStream";
+import type { ChatStreamRequest } from "@/components/chat/ChatStream";
 
 /** Reactive chat state for the current authed user. */
 export function useChat() {
@@ -25,6 +23,7 @@ export function useChat() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [usage, setUsage] = useState<number>(() => (phone ? getUsage(phone) : 0));
   const [streamRequest, setStreamRequest] = useState<ChatStreamRequest | null>(null);
+  const [streamConversationId, setStreamConversationId] = useState<string | null>(null);
   const [isResponding, setIsResponding] = useState(false);
 
   // Sync from storage on cross-tab edits
@@ -45,6 +44,7 @@ export function useChat() {
   const quota = PLAN_QUOTAS[user?.plan ?? "free"];
   const remaining = quota === Infinity ? Infinity : Math.max(0, quota - usage);
   const limitReached = remaining === 0;
+  const active = conversations.find((c) => c.id === activeId) ?? null;
 
   const newChat = useCallback(() => {
     if (!phone) return null;
@@ -64,8 +64,6 @@ export function useChat() {
     [phone, activeId],
   );
 
-  const active = conversations.find((c) => c.id === activeId) ?? null;
-
   const send = useCallback(
     async (text: string, imageUrl?: string) => {
       if (!phone || !text.trim() || isResponding) return;
@@ -73,15 +71,10 @@ export function useChat() {
 
       // Ensure we have an active conversation
       let convId = activeId;
-      let isFirstReply = false;
       if (!convId) {
         const c = createConversation(phone);
         convId = c.id;
         setActiveId(c.id);
-        isFirstReply = true;
-      } else {
-        const cur = conversations.find((c) => c.id === convId);
-        isFirstReply = !cur || cur.messages.length === 0;
       }
 
       const userMsg: ChatMessage = {
@@ -94,37 +87,38 @@ export function useChat() {
       appendMessage(phone, convId, userMsg);
       const newUsage = bumpUsage(phone);
       setUsage(newUsage);
-      setIsResponding(true);
       setConversations(loadConversations(phone));
 
+      setIsResponding(true);
+      setStreamConversationId(convId);
       setStreamRequest({
         query: text.trim(),
         imageBase64: imageUrl,
         board: user?.board || "cbse",
         classLevel: user?.classNum || 10,
-        subject: active?.subject || "general",
+        subject: active?.subject || "",
         language: user?.languages?.[0] || "en",
       });
     },
-    [phone, activeId, conversations, isResponding, limitReached, user, active?.subject],
+    [phone, activeId, isResponding, limitReached, user, active?.subject],
   );
 
   const onStreamComplete = useCallback(
     (msg: ChatMessage) => {
-      if (!phone || !activeId) return;
-      appendMessage(phone, activeId, msg);
+      const convId = streamConversationId || activeId;
+      if (!phone || !convId) return;
+      appendMessage(phone, convId, msg);
       setConversations(loadConversations(phone));
       setStreamRequest(null);
+      setStreamConversationId(null);
       setIsResponding(false);
     },
-    [phone, activeId]
+    [phone, activeId, streamConversationId],
   );
 
   const onStreamError = useCallback((err: Error) => {
     console.error("Stream Error", err);
-    // Ideally we can inject an error message bubble if we want, or rely on ChatStream showing retry.
     setIsResponding(false);
-    setStreamRequest(null);
   }, []);
 
   return {

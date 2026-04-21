@@ -20,7 +20,6 @@ export default function TeacherTickets() {
   const [tickets, setTickets] = useState<AdminTicket[]>([]);
 
   const currentStatus = searchParams.get("status") || "all";
-  const currentSubject = searchParams.get("subject") || "";
   const currentSort = searchParams.get("sort") || "oldest";
 
   useEffect(() => {
@@ -40,7 +39,6 @@ export default function TeacherTickets() {
 
   const filteredTickets = tickets.filter(t => {
     if (currentStatus !== "all" && t.status !== currentStatus) return false;
-    if (currentSubject && !t.subject.toLowerCase().includes(currentSubject.toLowerCase())) return false;
     return true;
   }).sort((a, b) => {
     if (currentSort === "oldest") return a.createdAt - b.createdAt;
@@ -67,12 +65,7 @@ export default function TeacherTickets() {
         </div>
         
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <Input 
-            placeholder="Filter subject..." 
-            className="w-full sm:w-[150px] bg-background"
-            value={currentSubject}
-            onChange={(e) => handleFilterChange("subject", e.target.value)}
-          />
+
           <Select value={currentStatus} onValueChange={(v) => handleFilterChange("status", v)}>
             <SelectTrigger className="w-full sm:w-[140px] bg-background">
               <SelectValue placeholder="Status" />
@@ -103,7 +96,7 @@ export default function TeacherTickets() {
               <TableRow>
                 <TableHead className="w-[100px]">ID</TableHead>
                 <TableHead>Class</TableHead>
-                <TableHead>Subject</TableHead>
+
                 <TableHead className="max-w-[300px]">Question Preview</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Wait Time</TableHead>
@@ -122,7 +115,6 @@ export default function TeacherTickets() {
                   <TableRow key={ticket.id} className="hover:bg-muted/30">
                     <TableCell className="font-semibold">{ticket.id}</TableCell>
                     <TableCell>{ticket.studentClass}</TableCell>
-                    <TableCell>{ticket.subject}</TableCell>
                     <TableCell className="max-w-[300px] truncate text-muted-foreground">
                       {ticket.questionText}
                     </TableCell>

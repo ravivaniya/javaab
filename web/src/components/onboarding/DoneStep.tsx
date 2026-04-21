@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Confetti } from "./Confetti";
 import type { Board, Lang, StudyStruggle } from "@/lib/auth";
@@ -8,14 +8,11 @@ interface DoneStepProps {
   classNum: number;
   languages: Lang[];
   struggle?: StudyStruggle;
+  name?: string;
   onPrimary: () => void;
-  onSecondary: () => void;
 }
 
-const boardLabel: Record<Board, string> = {
-  cbse: "CBSE",
-  gseb: "GSEB",
-};
+const boardLabel: Record<Board, string> = { cbse: "CBSE", gseb: "GSEB" };
 const langLabel: Record<Lang, string> = {
   en: "English",
   hi: "हिन्दी",
@@ -36,10 +33,11 @@ export function DoneStep({
   classNum,
   languages,
   struggle,
+  name,
   onPrimary,
-  onSecondary,
 }: DoneStepProps) {
   const personalLine = struggle ? STRUGGLE_LINE[struggle] : "Let's get started.";
+  const trimmed = name?.trim();
 
   return (
     <div className="relative space-y-6 text-center">
@@ -50,7 +48,7 @@ export function DoneStep({
           🎉
         </div>
         <h2 className="font-display text-4xl font-black tracking-tight sm:text-5xl">
-          Welcome to Javaab! 🎉
+          {trimmed ? `Welcome, ${trimmed}! 🎉` : "Welcome to Javaab! 🎉"}
         </h2>
         <p className="mx-auto max-w-md text-lg text-foreground/80">{personalLine}</p>
       </div>
@@ -63,21 +61,13 @@ export function DoneStep({
         ))}
       </div>
 
-      <div className="relative flex flex-col gap-3 sm:flex-row">
+      <div className="relative">
         <Button
           size="lg"
           onClick={onPrimary}
-          className="h-14 flex-1 rounded-pill text-base font-semibold shadow-glow"
+          className="h-14 w-full rounded-pill text-base font-semibold shadow-glow"
         >
           Ask my first question <ArrowRight className="ml-1 h-4 w-4" />
-        </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          onClick={onSecondary}
-          className="h-14 flex-1 rounded-pill text-base font-semibold"
-        >
-          <BookOpen className="mr-1 h-4 w-4" /> Browse subjects first
         </Button>
       </div>
     </div>

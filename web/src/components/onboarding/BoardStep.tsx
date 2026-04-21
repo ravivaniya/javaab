@@ -1,74 +1,108 @@
 import { useEffect, useRef, useState } from "react";
 import type { Board } from "@/lib/auth";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface BoardStepProps {
+  name: string;
   value?: Board;
   attendsCoaching?: boolean;
+  onChangeName: (n: string) => void;
   onSelectBoard: (b: Board) => void;
   onSelectCoaching: (attends: boolean) => void;
 }
 
 const boards: { id: Board; title: string; subtitle: string; accent: string; emoji: string }[] = [
-  { id: "cbse", title: "CBSE (NCERT)", subtitle: "Class 6–12 · English + Hindi", accent: "cbse", emoji: "📘" },
-  { id: "gseb", title: "Gujarat Board (GSEB)", subtitle: "Std 6–12 · Gujarati + English", accent: "gseb", emoji: "📕" },
+  { id: "cbse", title: "CBSE (NCERT)", subtitle: "Class 6–12 · English + Hindi", accent: "cbse", emoji: "🏛️" },
+  { id: "gseb", title: "Gujarat Board (GSEB)", subtitle: "Std 6–12 · Gujarati + English", accent: "gseb", emoji: "🎓" },
 ];
 
-/** Onboarding Step 1 — board + coaching sub-question. */
-export function BoardStep({ value, attendsCoaching, onSelectBoard, onSelectCoaching }: BoardStepProps) {
+/** Onboarding Step 1 — display name + board + coaching sub-question. */
+export function BoardStep({
+  name,
+  value,
+  attendsCoaching,
+  onChangeName,
+  onSelectBoard,
+  onSelectCoaching,
+}: BoardStepProps) {
   return (
     <div className="space-y-6">
       <header className="space-y-2">
         <h2 className="font-display text-3xl font-black tracking-tight sm:text-4xl">
-          Which board do you study in?
+          Let's get started
         </h2>
-        <p className="text-muted-foreground">Pick one — you can change this later.</p>
+        <p className="text-muted-foreground">First, tell us a little about you.</p>
       </header>
 
-      <div className="grid gap-4">
-        {boards.map((b) => {
-          const active = value === b.id;
-          return (
-            <div key={b.id}>
-              <button
-                type="button"
-                onClick={() => onSelectBoard(b.id)}
-                className={cn(
-                  "group relative flex w-full items-center gap-4 rounded-3xl border-2 bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-soft sm:p-6",
-                  active ? "border-primary bg-primary/5 shadow-soft" : "border-black/5",
-                )}
-              >
-                <div
-                  className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-2xl"
-                  style={{
-                    backgroundColor: `hsl(var(--${b.accent}) / 0.12)`,
-                    color: `hsl(var(--${b.accent}))`,
-                  }}
-                  aria-hidden
-                >
-                  {b.emoji}
-                </div>
-                <div className="flex-1">
-                  <div className="font-display text-xl font-bold">{b.title}</div>
-                  <div className="text-sm text-muted-foreground">{b.subtitle}</div>
-                </div>
-                <span
-                  className={cn(
-                    "h-5 w-5 shrink-0 rounded-full border-2",
-                    active ? "border-primary bg-primary" : "border-border",
-                  )}
-                  aria-hidden
-                />
-              </button>
+      {/* Display name */}
+      <div className="space-y-2">
+        <label htmlFor="display-name" className="block text-sm font-semibold">
+          What should we call you?
+        </label>
+        <div className="relative">
+          <Input
+            id="display-name"
+            value={name}
+            maxLength={20}
+            onChange={(e) => onChangeName(e.target.value)}
+            placeholder="e.g. Rahul, Priya..."
+            className="h-12 rounded-2xl border-black/10 px-4 pr-16 text-base"
+          />
+          <span className="pointer-events-none absolute bottom-2 right-3 text-[11px] text-muted-foreground">
+            {name.length}/20
+          </span>
+        </div>
+      </div>
 
-              <CoachingSlot
-                open={active}
-                attendsCoaching={attendsCoaching}
-                onSelect={onSelectCoaching}
-              />
-            </div>
-          );
-        })}
+      {/* Board */}
+      <div className="space-y-3">
+        <p className="text-sm font-semibold">Which board do you study in?</p>
+        <div className="grid gap-4">
+          {boards.map((b) => {
+            const active = value === b.id;
+            return (
+              <div key={b.id}>
+                <button
+                  type="button"
+                  onClick={() => onSelectBoard(b.id)}
+                  className={cn(
+                    "group relative flex w-full items-center gap-4 rounded-3xl border-2 bg-card p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-soft sm:p-5",
+                    active ? "border-primary bg-primary/5 shadow-soft" : "border-black/5",
+                  )}
+                >
+                  <div
+                    className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-2xl"
+                    style={{
+                      backgroundColor: `hsl(var(--${b.accent}) / 0.12)`,
+                      color: `hsl(var(--${b.accent}))`,
+                    }}
+                    aria-hidden
+                  >
+                    {b.emoji}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-display text-lg font-bold">{b.title}</div>
+                    <div className="text-xs text-muted-foreground">{b.subtitle}</div>
+                  </div>
+                  <span
+                    className={cn(
+                      "h-5 w-5 shrink-0 rounded-full border-2",
+                      active ? "border-primary bg-primary" : "border-border",
+                    )}
+                    aria-hidden
+                  />
+                </button>
+
+                <CoachingSlot
+                  open={active}
+                  attendsCoaching={attendsCoaching}
+                  onSelect={onSelectCoaching}
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -87,11 +121,8 @@ function CoachingSlot({
   const [height, setHeight] = useState(0);
 
   useEffect(() => {
-    if (open && innerRef.current) {
-      setHeight(innerRef.current.scrollHeight);
-    } else {
-      setHeight(0);
-    }
+    if (open && innerRef.current) setHeight(innerRef.current.scrollHeight);
+    else setHeight(0);
   }, [open]);
 
   return (
@@ -100,17 +131,17 @@ function CoachingSlot({
       className="overflow-hidden transition-[height] duration-200 ease-in-out"
       aria-hidden={!open}
     >
-      <div ref={innerRef} className="pt-4">
+      <div ref={innerRef} className="pt-3">
         <div className="rounded-3xl border-2 border-dashed border-border bg-secondary/40 p-4">
           <p className="mb-3 text-sm font-medium">
             Do you attend a coaching class or tuition?
           </p>
           <div className="flex flex-wrap gap-2">
             <Chip selected={attendsCoaching === true} onClick={() => onSelect(true)}>
-              ✅ Yes, I do
+              🎯 Yes, I do
             </Chip>
             <Chip selected={attendsCoaching === false} onClick={() => onSelect(false)}>
-              📚 No, I study on my own
+              🏠 No, I study on my own
             </Chip>
           </div>
         </div>

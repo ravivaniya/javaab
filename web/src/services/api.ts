@@ -51,8 +51,6 @@ export const ApiService = {
   },
 
   async updateProfile(data: Record<string, unknown>) {
-    // We map student profile to a theoretical POST /student/profile endpoint 
-    // replacing the local storage logic.
     return fetchApi("/student/profile", {
       method: "POST",
       body: JSON.stringify(data),
@@ -88,7 +86,7 @@ export const ApiService = {
       image_base64?: string;
       board: string;
       class_level: number;
-      subject: string;
+      subject?: string;
       language: string;
     },
     callbacks: {

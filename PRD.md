@@ -1,14 +1,24 @@
 # Javaab — AI-Powered Education Platform
+
 ## Complete Technical Plan V1
+
 ### Products: Javaab AI (Chat) + Javaab API (Developer Platform)
+
 ### Class 6–12 | NCERT (CBSE) + GSEB (Gujarat) | English, Hindi, Gujarati
+
 ### Azure Cloud | Vite (React SPA) | React Native | Swiggy-Style Design
 
 ---
 
 **Document Version**: 1.0
-**Last Updated**: 2026-04-07
+**Last Updated**: 2026-04-21
 **Domain**: tryjavaab.com (Cloudflare) → app.tryjavaab.com (Web App)
+
+**Current Implementation Snapshot**
+
+- Web app: Vite + React SPA with React Router routes for `/`, `/login`, `/onboarding`, `/chat`, `/tickets`, `/tickets/:id`, `/subscribe`, `/refer`, `/settings`, `/settings/subscription`, and `/admin/teacher/*`.
+- Backend: FastAPI mounted routes for `/health`, `/auth/*`, `/chat/*`, `/subjects/*`, `/tickets/*`, `/admin/*`, and `/student/profile`.
+- Subject browser is a future/backlog UI. The backend subject endpoints exist so the frontend can add this screen later without another API contract change.
 
 ---
 
@@ -75,6 +85,7 @@ Students in India studying under CBSE (NCERT) and Gujarat State Board (GSEB/GCER
 ### Solution
 
 An AI-powered educational assistant that:
+
 - Accepts **text** (typed) or **image** (photo of textbook/notebook) input
 - Understands questions in **English, Hindi, and Gujarati** — in both native scripts (Devanagari, Gujarati) AND Roman/transliterated script
 - Returns **curriculum-aligned, step-by-step answers** grounded in actual NCERT and GSEB textbook content
@@ -83,12 +94,12 @@ An AI-powered educational assistant that:
 
 ### Non-Negotiables
 
-| Principle | Meaning |
-|-----------|---------|
-| **Accuracy** | Answers MUST be grounded in official textbook content via RAG; no hallucination |
-| **Reliability** | System must gracefully degrade, never give a confidently wrong answer |
-| **Curriculum Alignment** | Follow the exact terminology, methods, and notation used in NCERT/GSEB books |
-| **Script Agnostic** | "trigonometry ka formula batao" and "ત્રિકોણમિતિનું સૂત્ર" must both work |
+| Principle                | Meaning                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| **Accuracy**             | Answers MUST be grounded in official textbook content via RAG; no hallucination |
+| **Reliability**          | System must gracefully degrade, never give a confidently wrong answer           |
+| **Curriculum Alignment** | Follow the exact terminology, methods, and notation used in NCERT/GSEB books    |
+| **Script Agnostic**      | "trigonometry ka formula batao" and "ત્રિકોણમિતિનું સૂત્ર" must both work       |
 
 ### Two Products Under One Brand
 
@@ -150,12 +161,12 @@ SCENARIO 5: Student scans + also types text along with image
 
 ### Our Approach: Per Interaction (Message-Based)
 
-| Approach | Pros | Cons | Our Choice? |
-|----------|------|------|-------------|
-| **Token-based** | Most precise | Complex for users; "How many tokens is my question?" confuses students | ❌ |
-| **Session-based** | Simple; encourages follow-ups | Gameable; one session could have 100 messages | ❌ |
-| **Message-based** ✅ | Simple, predictable, transparent: "You have 87 queries left" | A simple "hi" costs same as a complex math problem | **✅ YES** |
-| **Weighted message** | Fairer to users | Complex to implement and explain | ❌ (future maybe) |
+| Approach             | Pros                                                         | Cons                                                                   | Our Choice?       |
+| -------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------- | ----------------- |
+| **Token-based**      | Most precise                                                 | Complex for users; "How many tokens is my question?" confuses students | ❌                |
+| **Session-based**    | Simple; encourages follow-ups                                | Gameable; one session could have 100 messages                          | ❌                |
+| **Message-based** ✅ | Simple, predictable, transparent: "You have 87 queries left" | A simple "hi" costs same as a complex math problem                     | **✅ YES**        |
+| **Weighted message** | Fairer to users                                              | Complex to implement and explain                                       | ❌ (future maybe) |
 
 ### Why Message-Based is Best for Javaab
 
@@ -207,25 +218,25 @@ DOES NOT COUNT AS A QUERY:
 
 ### Javaab AI Plans
 
-| Feature | Free | Plus (For Curious) | Pro (For Serious) | Custom (Schools/Coaching) |
-|---------|------|-------------------|-------------------|--------------------------|
-| **Price (incl. GST)** | ₹0 | ~~₹499~~ **₹199/mo** | ~~₹999~~ **₹499/mo** | Based on formula |
-| **Annual Price** | ₹0 | ~~₹5,988~~ **₹1,899/yr** (20% off) | ~~₹11,988~~ **₹4,791/yr** (20% off) | Negotiated |
-| **Queries/month** | 50 | 1,000 | Unlimited | Custom formula |
-| **Text input** | ✅ | ✅ | ✅ | ✅ |
-| **Image input** | ❌ | ✅ | ✅ | ✅ |
-| **Voice input** | ❌ | ❌ | 🔜 Future | 🔜 Future |
-| **Streaming answers** | ✅ | ✅ | ✅ | ✅ |
-| **LaTeX math** | ✅ | ✅ | ✅ | ✅ |
-| **Conversation history** | 7 days | 90 days | Unlimited | Unlimited |
-| **Priority processing** | ❌ | ❌ | ✅ (dedicated queue) | ✅ |
-| **Teacher Tickets** | ❌ | ❌ | ✅ (3/month) | ✅ (based on plan) |
-| **Exam tips** | Basic | Full | Full + PYQ analysis | Full + Custom |
-| **Question Paper Generator** | ❌ | ❌ | ❌ | ✅ |
-| **Lesson Plan Builder** | ❌ | ❌ | ❌ | ✅ |
-| **Institute Branding** | ❌ | ❌ | ❌ | ✅ (logo, name, header) |
-| **Referral rewards** | ✅ | ✅ | ✅ | ✅ |
-| **API access** | ❌ | ❌ | ❌ | 🔜 Javaab API (future) |
+| Feature                      | Free   | Plus (For Curious)                 | Pro (For Serious)                   | Custom (Schools/Coaching) |
+| ---------------------------- | ------ | ---------------------------------- | ----------------------------------- | ------------------------- |
+| **Price (incl. GST)**        | ₹0     | ~~₹499~~ **₹199/mo**               | ~~₹999~~ **₹499/mo**                | Based on formula          |
+| **Annual Price**             | ₹0     | ~~₹5,988~~ **₹1,899/yr** (20% off) | ~~₹11,988~~ **₹4,791/yr** (20% off) | Negotiated                |
+| **Queries/month**            | 50     | 1,000                              | Unlimited                           | Custom formula            |
+| **Text input**               | ✅     | ✅                                 | ✅                                  | ✅                        |
+| **Image input**              | ❌     | ✅                                 | ✅                                  | ✅                        |
+| **Voice input**              | ❌     | ❌                                 | 🔜 Future                           | 🔜 Future                 |
+| **Streaming answers**        | ✅     | ✅                                 | ✅                                  | ✅                        |
+| **LaTeX math**               | ✅     | ✅                                 | ✅                                  | ✅                        |
+| **Conversation history**     | 7 days | 90 days                            | Unlimited                           | Unlimited                 |
+| **Priority processing**      | ❌     | ❌                                 | ✅ (dedicated queue)                | ✅                        |
+| **Teacher Tickets**          | ❌     | ❌                                 | ✅ (3/month)                        | ✅ (based on plan)        |
+| **Exam tips**                | Basic  | Full                               | Full + PYQ analysis                 | Full + Custom             |
+| **Question Paper Generator** | ❌     | ❌                                 | ❌                                  | ✅                        |
+| **Lesson Plan Builder**      | ❌     | ❌                                 | ❌                                  | ✅                        |
+| **Institute Branding**       | ❌     | ❌                                 | ❌                                  | ✅ (logo, name, header)   |
+| **Referral rewards**         | ✅     | ✅                                 | ✅                                  | ✅                        |
+| **API access**               | ❌     | ❌                                 | ❌                                  | 🔜 Javaab API (future)    |
 
 ### Pricing Viability Check
 
@@ -381,13 +392,13 @@ Large School (500 students, all add-ons):
 
 ### Why Razorpay
 
-| Factor | Razorpay | Paytm Gateway | Cashfree |
-|--------|----------|--------------|----------|
-| UPI support | ✅ Best | ✅ | ✅ |
-| Student-friendly | ✅ UPI, cards, wallets | ✅ | ⚠️ |
-| Subscription billing | ✅ Native | ⚠️ Limited | ✅ |
-| Docs/integration | ✅ Best in India | ⚠️ | ✅ |
-| Brand trust (students) | ✅ High | ✅ High | ⚠️ Medium |
+| Factor                 | Razorpay               | Paytm Gateway | Cashfree  |
+| ---------------------- | ---------------------- | ------------- | --------- |
+| UPI support            | ✅ Best                | ✅            | ✅        |
+| Student-friendly       | ✅ UPI, cards, wallets | ✅            | ⚠️        |
+| Subscription billing   | ✅ Native              | ⚠️ Limited    | ✅        |
+| Docs/integration       | ✅ Best in India       | ⚠️            | ✅        |
+| Brand trust (students) | ✅ High                | ✅ High       | ⚠️ Medium |
 
 ### Razorpay Pricing
 
@@ -414,10 +425,10 @@ EXAMPLE — Pro Plan (₹499 incl GST):
 ### Revenue After All Deductions
 
 | Plan | Total from Student | Base Price | GST (18%) | Razorpay (2.36%) | **Net Revenue** |
-|------|-------------------|------------|-----------|-----------------|----------------|
-| Free | ₹0 | ₹0 | ₹0 | ₹0 | **₹0** |
-| Plus | ₹199 | ₹168.64 | ₹30.36 | -₹4.70 | **₹163.94** |
-| Pro | ₹499 | ₹422.88 | ₹76.12 | -₹11.78 | **₹411.10** |
+| ---- | ------------------ | ---------- | --------- | ---------------- | --------------- |
+| Free | ₹0                 | ₹0         | ₹0        | ₹0               | **₹0**          |
+| Plus | ₹199               | ₹168.64    | ₹30.36    | -₹4.70           | **₹163.94**     |
+| Pro  | ₹499               | ₹422.88    | ₹76.12    | -₹11.78          | **₹411.10**     |
 
 > GST (₹30.36 and ₹45.61) goes to the government. Razorpay fee goes to Razorpay. Your actual net revenue per user: Plus = ₹163.94, Pro = ₹246.33.
 
@@ -441,77 +452,77 @@ Exchange rate: 1 USD = ₹84
 
 **User Mix**: 600 Free + 300 Plus + 100 Pro
 
-| Category | Detail | Cost/mo (₹) |
-|----------|--------|-------------|
-| AI/LLM — Free | 600 × 50q × ₹0.45 | ₹13,500 |
-| AI/LLM — Plus | 300 × 250q × ₹0.70 | ₹52,500 |
-| AI/LLM — Pro | 100 × 500q × ₹0.83 | ₹41,500 |
-| **AI Subtotal** | | **₹1,21,000** |
-| Infrastructure | Container Apps, AI Search, Redis, Cosmos, etc. | ₹9,954 |
-| GST on Azure (18%) | | ₹1,792 |
-| Teacher Tickets | ~50 tickets/mo | ₹3,000 |
-| Verified Cache Expansion | 500 answers/mo | ₹1,750 |
-| Razorpay Processing | | ₹2,115 |
-| **GRAND TOTAL** | | **₹1,39,611/mo** |
+| Category                 | Detail                                         | Cost/mo (₹)      |
+| ------------------------ | ---------------------------------------------- | ---------------- |
+| AI/LLM — Free            | 600 × 50q × ₹0.45                              | ₹13,500          |
+| AI/LLM — Plus            | 300 × 250q × ₹0.70                             | ₹52,500          |
+| AI/LLM — Pro             | 100 × 500q × ₹0.83                             | ₹41,500          |
+| **AI Subtotal**          |                                                | **₹1,21,000**    |
+| Infrastructure           | Container Apps, AI Search, Redis, Cosmos, etc. | ₹9,954           |
+| GST on Azure (18%)       |                                                | ₹1,792           |
+| Teacher Tickets          | ~50 tickets/mo                                 | ₹3,000           |
+| Verified Cache Expansion | 500 answers/mo                                 | ₹1,750           |
+| Razorpay Processing      |                                                | ₹2,115           |
+| **GRAND TOTAL**          |                                                | **₹1,39,611/mo** |
 
 **Revenue at 1,000 users:**
 
-| Source | Revenue/mo |
-|--------|------------|
-| Plus (300 × ₹163.94) | ₹49,182 |
-| Pro (100 × ₹411.10) | ₹41,110 |
-| **Total Revenue** | **₹73,815** |
-| **Loss** | **-₹65,796/mo** |
+| Source               | Revenue/mo      |
+| -------------------- | --------------- |
+| Plus (300 × ₹163.94) | ₹49,182         |
+| Pro (100 × ₹411.10)  | ₹41,110         |
+| **Total Revenue**    | **₹73,815**     |
+| **Loss**             | **-₹65,796/mo** |
 
 ### (b) 10,000 Users/Month — Growth Phase
 
 **User Mix**: 6,000 Free + 3,000 Plus + 800 Pro + 5 Custom (avg 100 students each)
 
-| Category | Cost/mo (₹) |
-|----------|-------------|
-| AI/LLM (Free) | 6,000 × 50q × ₹0.40 = ₹1,20,000 |
-| AI/LLM (Plus) | 3,000 × 250q × ₹0.60 = ₹4,50,000 |
-| AI/LLM (Pro) | 800 × 500q × ₹0.70 = ₹2,80,000 |
-| AI/LLM (Custom) | 500 × 110q × ₹0.55 = ₹30,250 |
-| **AI Subtotal** | **₹10,00,250** |
-| Infra (scaled) | ₹35,000 |
-| GST on Infra (18%) | ₹6,300 |
-| Teacher Tickets + Cache + Razorpay | ₹26,834 |
-| **GRAND TOTAL** | **₹10,68,384/mo** |
+| Category                           | Cost/mo (₹)                      |
+| ---------------------------------- | -------------------------------- |
+| AI/LLM (Free)                      | 6,000 × 50q × ₹0.40 = ₹1,20,000  |
+| AI/LLM (Plus)                      | 3,000 × 250q × ₹0.60 = ₹4,50,000 |
+| AI/LLM (Pro)                       | 800 × 500q × ₹0.70 = ₹2,80,000   |
+| AI/LLM (Custom)                    | 500 × 110q × ₹0.55 = ₹30,250     |
+| **AI Subtotal**                    | **₹10,00,250**                   |
+| Infra (scaled)                     | ₹35,000                          |
+| GST on Infra (18%)                 | ₹6,300                           |
+| Teacher Tickets + Cache + Razorpay | ₹26,834                          |
+| **GRAND TOTAL**                    | **₹10,68,384/mo**                |
 
 **Revenue at 10,000 users:**
 
-| Source | Revenue/mo |
-|--------|------------|
-| Plus (3,000 × ₹163.94) | ₹4,91,820 |
-| Pro (800 × ₹411.10) | ₹3,28,880 |
-| Custom (5 × avg ₹7,897) | ₹39,485 |
-| **Total Revenue** | **₹7,28,369** |
-| **Loss** | **-₹3,40,015/mo** |
+| Source                  | Revenue/mo        |
+| ----------------------- | ----------------- |
+| Plus (3,000 × ₹163.94)  | ₹4,91,820         |
+| Pro (800 × ₹411.10)     | ₹3,28,880         |
+| Custom (5 × avg ₹7,897) | ₹39,485           |
+| **Total Revenue**       | **₹7,28,369**     |
+| **Loss**                | **-₹3,40,015/mo** |
 
 ### (c) 1,00,000 (1 Lakh) Users/Month — Scale Phase
 
 **User Mix**: 55,000 Free + 30,000 Plus + 10,000 Pro + 50 Custom (avg 100 each)
 
-| Category | Cost/mo (₹) |
-|----------|-------------|
-| AI/LLM (Free) | 55,000 × 80q × ₹0.35 = ₹15,40,000 |
-| AI/LLM (Plus) | 30,000 × 200q × ₹0.50 = ₹30,00,000 |
-| AI/LLM (Pro) | 10,000 × 400q × ₹0.55 = ₹22,00,000 |
-| AI/LLM (Custom) | 5,000 × 100q × ₹0.45 = ₹2,25,000 |
-| **AI Subtotal** | **₹69,65,000** |
-| Infra + GST + Tickets + Cache + Razorpay | ₹4,40,000 |
-| **GRAND TOTAL** | **₹74,05,000/mo** |
+| Category                                 | Cost/mo (₹)                        |
+| ---------------------------------------- | ---------------------------------- |
+| AI/LLM (Free)                            | 55,000 × 80q × ₹0.35 = ₹15,40,000  |
+| AI/LLM (Plus)                            | 30,000 × 200q × ₹0.50 = ₹30,00,000 |
+| AI/LLM (Pro)                             | 10,000 × 400q × ₹0.55 = ₹22,00,000 |
+| AI/LLM (Custom)                          | 5,000 × 100q × ₹0.45 = ₹2,25,000   |
+| **AI Subtotal**                          | **₹69,65,000**                     |
+| Infra + GST + Tickets + Cache + Razorpay | ₹4,40,000                          |
+| **GRAND TOTAL**                          | **₹74,05,000/mo**                  |
 
 **Revenue at 1 lakh users:**
 
-| Source | Revenue/mo |
-|--------|------------|
-| Plus (30,000 × ₹163.94) | ₹49,18,200 |
-| Pro (10,000 × ₹411.10) | ₹41,11,000 |
-| Custom (50 × avg ₹10,000) | ₹5,00,000 |
-| **Total Revenue** | **₹78,81,500** |
-| **Profit** | **+₹4,76,500/mo** |
+| Source                    | Revenue/mo        |
+| ------------------------- | ----------------- |
+| Plus (30,000 × ₹163.94)   | ₹49,18,200        |
+| Pro (10,000 × ₹411.10)    | ₹41,11,000        |
+| Custom (50 × avg ₹10,000) | ₹5,00,000         |
+| **Total Revenue**         | **₹78,81,500**    |
+| **Profit**                | **+₹4,76,500/mo** |
 
 ### Reality Check — When Does This Become Profitable?
 
@@ -615,15 +626,15 @@ FORMULA 7: Customer Acquisition Cost (CAC) vs LTV
 
 ## 8. Risk Mitigation
 
-| Risk | Mitigation |
-|------|-----------|
+| Risk                                           | Mitigation                                                                                |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | **₹199/₹299 pricing is below cost (at scale)** | Intentional — B2C is acquisition, B2B Custom is profit center. Monitor burn rate tightly. |
-| **Free users overloading** | Text-only, 50/month cap, Phi-4-mini only (cheapest), no image |
-| **Custom plan churn** | Lock-in via branded exports, student data, lesson plans stored on platform |
-| **Razorpay payment failures** | Auto-retry 3 times, dunning emails, UPI Autopay fallback |
-| **GST compliance** | Register for GST before launch; use Razorpay's auto-GST invoicing |
-| **AI model hallucinations** | RAG grounding + low temperature + confidence scoring + teacher tickets |
-| **Scaling costs** | Cache hit rate grows over time; Custom B2B revenue cushions growth cost |
+| **Free users overloading**                     | Text-only, 50/month cap, Phi-4-mini only (cheapest), no image                             |
+| **Custom plan churn**                          | Lock-in via branded exports, student data, lesson plans stored on platform                |
+| **Razorpay payment failures**                  | Auto-retry 3 times, dunning emails, UPI Autopay fallback                                  |
+| **GST compliance**                             | Register for GST before launch; use Razorpay's auto-GST invoicing                         |
+| **AI model hallucinations**                    | RAG grounding + low temperature + confidence scoring + teacher tickets                    |
+| **Scaling costs**                              | Cache hit rate grows over time; Custom B2B revenue cushions growth cost                   |
 
 ---
 
@@ -639,7 +650,7 @@ FORMULA 7: Customer Acquisition Cost (CAC) vs LTV
                             │ tryjavaab.com    → Marketing    │
                             │ app.tryjavaab.com → Web App    │
                             │ api.tryjavaab.com  → Javaab API │
-                            │ admin.tryjavaab.com → Teacher   │
+                            │ admin.tryjavaab.com → Future alias │
                             └──────────────┬──────────────┘
                                            │
 ┌──────────────────────────────────────────────────────────────────┐
@@ -648,7 +659,9 @@ FORMULA 7: Customer Acquisition Cost (CAC) vs LTV
 │  ┌─────────────────────────────────────────────────────────────┐  │
 │  │              AZURE API MANAGEMENT                           │  │
 │  │   Rate limiting (per plan), Auth, API keys, Analytics       │  │
-│  │   Routes: /chat/*, /subjects/*, /tickets/*, /api/v1/*       │  │
+│  │   App routes: /auth/*, /chat/*, /subjects/*, /tickets/*,    │  │
+│  │               /admin/*, /student/*                          │  │
+│  │   Future public API: /api/v1/*                              │  │
 │  └────────────────────────────┬────────────────────────────────┘  │
 │                               │                                   │
 │  ┌────────────────────────────▼────────────────────────────────┐  │
@@ -682,48 +695,48 @@ FORMULA 7: Customer Acquisition Cost (CAC) vs LTV
 
 ### Services Deferred (Not Needed Now)
 
-| Service | Why Not Now | When to Add |
-|---------|-----------|-------------|
-| **Azure Event Hub** | Only 3 event types; direct DB write is fine | When Javaab API launches |
-| **Azure Service Bus** | Synchronous request-response fine for <1L users | When async batch jobs needed |
-| **Kubernetes (AKS)** | Container Apps provides same auto-scaling | When >5L users |
-| **Azure SQL / PostgreSQL** | Cosmos DB free tier handles all needs | When Cosmos DB cost > $50/mo |
+| Service                    | Why Not Now                                     | When to Add                  |
+| -------------------------- | ----------------------------------------------- | ---------------------------- |
+| **Azure Event Hub**        | Only 3 event types; direct DB write is fine     | When Javaab API launches     |
+| **Azure Service Bus**      | Synchronous request-response fine for <1L users | When async batch jobs needed |
+| **Kubernetes (AKS)**       | Container Apps provides same auto-scaling       | When >5L users               |
+| **Azure SQL / PostgreSQL** | Cosmos DB free tier handles all needs           | When Cosmos DB cost > $50/mo |
 
 ---
 
 ## 10. Complete Tech Stack
 
-| Layer | Service | Tier | Monthly Cost | Notes |
-|-------|---------|------|-------------|-------|
-| **DNS/CDN** | Cloudflare | Free | $0 | DDoS, SSL, caching |
-| **Web App** | Azure Static Web Apps + Vite | Free→Standard | $0→$9 | app.tryjavaab.com |
-| **Mobile** | React Native (Expo) | N/A | $0 | Client-side |
-| **API Gateway** | Azure API Management | Consumption | ~$4/1M calls | Rate limiting, auth |
-| **Backend** | Azure Container Apps | Consumption | ~$0→$50 | Auto-scale to zero |
-| **Container Registry** | Azure Container Registry | Basic | ~$5/mo | Store Docker images |
-| **Secrets** | Azure Key Vault | Standard | ~$0.50/mo | All API keys, connection strings |
-| **LLM Simple** | Phi-4-mini | Serverless | $0.075/$0.30 per 1M | Text-only simple queries |
-| **LLM Medium** | GPT-4.1-mini | Pay-go | $0.15/$0.60 per 1M | Medium + Image OCR |
-| **LLM Complex** | GPT-4.1 | Pay-go | $2.50/$10.00 per 1M | Complex math/science |
-| **Embeddings** | text-embedding-3-small | Pay-go | $0.02 per 1M | Multilingual |
-| **Vector Search** | Azure AI Search | Basic→S1 | $74→$245 | HNSW + keyword hybrid |
-| **Cache** | Azure Redis Cache | C0→C1 | $16→$34 | Verified answer storage |
-| **Database** | Azure Cosmos DB | Free→Serverless | $0→$5 | Users, chats, tickets |
-| **File Storage** | Azure Blob Storage | Hot | ~$2 | PDFs, images, exports |
-| **Monitoring** | Azure Application Insights | Free (5GB) | $0 | Perf, errors, usage |
-| **Auth** | Azure AD B2C | Free (50K) | $0 | Phone OTP |
-| **Payments** | Razorpay | Standard | 2.36% per txn | UPI, cards, subscriptions |
-| **Voice (Future)** | Azure Whisper | — | $0.18-$0.36/hr | When ready |
+| Layer                  | Service                      | Tier            | Monthly Cost        | Notes                            |
+| ---------------------- | ---------------------------- | --------------- | ------------------- | -------------------------------- |
+| **DNS/CDN**            | Cloudflare                   | Free            | $0                  | DDoS, SSL, caching               |
+| **Web App**            | Azure Static Web Apps + Vite | Free→Standard   | $0→$9               | app.tryjavaab.com                |
+| **Mobile**             | React Native (Expo)          | N/A             | $0                  | Client-side                      |
+| **API Gateway**        | Azure API Management         | Consumption     | ~$4/1M calls        | Rate limiting, auth              |
+| **Backend**            | Azure Container Apps         | Consumption     | ~$0→$50             | Auto-scale to zero               |
+| **Container Registry** | Azure Container Registry     | Basic           | ~$5/mo              | Store Docker images              |
+| **Secrets**            | Azure Key Vault              | Standard        | ~$0.50/mo           | All API keys, connection strings |
+| **LLM Simple**         | Phi-4-mini                   | Serverless      | $0.075/$0.30 per 1M | Text-only simple queries         |
+| **LLM Medium**         | GPT-4.1-mini                 | Pay-go          | $0.15/$0.60 per 1M  | Medium + Image OCR               |
+| **LLM Complex**        | GPT-4.1                      | Pay-go          | $2.50/$10.00 per 1M | Complex math/science             |
+| **Embeddings**         | text-embedding-3-small       | Pay-go          | $0.02 per 1M        | Multilingual                     |
+| **Vector Search**      | Azure AI Search              | Basic→S1        | $74→$245            | HNSW + keyword hybrid            |
+| **Cache**              | Azure Redis Cache            | C0→C1           | $16→$34             | Verified answer storage          |
+| **Database**           | Azure Cosmos DB              | Free→Serverless | $0→$5               | Users, chats, tickets            |
+| **File Storage**       | Azure Blob Storage           | Hot             | ~$2                 | PDFs, images, exports            |
+| **Monitoring**         | Azure Application Insights   | Free (5GB)      | $0                  | Perf, errors, usage              |
+| **Auth**               | Azure AD B2C                 | Free (50K)      | $0                  | Phone OTP                        |
+| **Payments**           | Razorpay                     | Standard        | 2.36% per txn       | UPI, cards, subscriptions        |
+| **Voice (Future)**     | Azure Whisper                | —               | $0.18-$0.36/hr      | When ready                       |
 
 ### Why Container Apps Instead of App Service
 
-| Feature | App Service (V2) | Container Apps (V3) |
-|---------|-----------------|---------------------|
-| Scaling | Manual or limited auto-scale | **True auto-scale to zero** |
-| Cost at low usage | Always paying (even idle) | **$0 when no requests** |
-| Cost at high usage | Fixed tiers | **Pay exactly for usage** |
-| For Javaab | Fine for MVP | **Better for variable load** (students study in evening, idle at night) |
-| Monthly cost (1K users) | ~$26 (B2 always on) | **~$15-20** (scales down at night) |
+| Feature                 | App Service (V2)             | Container Apps (V3)                                                     |
+| ----------------------- | ---------------------------- | ----------------------------------------------------------------------- |
+| Scaling                 | Manual or limited auto-scale | **True auto-scale to zero**                                             |
+| Cost at low usage       | Always paying (even idle)    | **$0 when no requests**                                                 |
+| Cost at high usage      | Fixed tiers                  | **Pay exactly for usage**                                               |
+| For Javaab              | Fine for MVP                 | **Better for variable load** (students study in evening, idle at night) |
+| Monthly cost (1K users) | ~$26 (B2 always on)          | **~$15-20** (scales down at night)                                      |
 
 ---
 
@@ -731,24 +744,24 @@ FORMULA 7: Customer Acquisition Cost (CAC) vs LTV
 
 ### Models Available on Azure AI Foundry
 
-| Model | Publisher | Input/1M tokens | Output/1M tokens | Vision? | Indic Language Quality |
-|-------|----------|-----------------|-------------------|---------|----------------------|
-| **Phi-4-mini** ✅ | Microsoft | **$0.075** | **$0.30** | ❌ | Good for simple tasks |
-| **GPT-4.1-mini** ✅ | OpenAI | $0.15 | $0.60 | ✅ | Very Good |
-| Llama 4 Maverick | Meta | $0.25 | $1.00 | ✅ | Good |
-| **GPT-4.1** ✅ | OpenAI | $2.50 | $10.00 | ✅ | **Best** |
-| Claude Sonnet | Anthropic | ~$3.00 | ~$15.00 | ✅ | Good |
-| Mistral Large 3 | Mistral | ~$2.00 | ~$6.00 | ✅ | Good (European focus) |
+| Model               | Publisher | Input/1M tokens | Output/1M tokens | Vision? | Indic Language Quality |
+| ------------------- | --------- | --------------- | ---------------- | ------- | ---------------------- |
+| **Phi-4-mini** ✅   | Microsoft | **$0.075**      | **$0.30**        | ❌      | Good for simple tasks  |
+| **GPT-4.1-mini** ✅ | OpenAI    | $0.15           | $0.60            | ✅      | Very Good              |
+| Llama 4 Maverick    | Meta      | $0.25           | $1.00            | ✅      | Good                   |
+| **GPT-4.1** ✅      | OpenAI    | $2.50           | $10.00           | ✅      | **Best**               |
+| Claude Sonnet       | Anthropic | ~$3.00          | ~$15.00          | ✅      | Good                   |
+| Mistral Large 3     | Mistral   | ~$2.00          | ~$6.00           | ✅      | Good (European focus)  |
 
 ### Why We Chose This Combination
 
-| Our Choice | Why, Not Others |
-|-----------|----------------|
-| **Phi-4-mini** for simple queries | 50% cheaper than GPT-4.1-mini; equally accurate for definitions/factual recall; best Azure integration |
-| **GPT-4.1-mini** for medium queries | Has vision (Phi-4-mini doesn't); best price-to-quality for concept explanations; excellent Hindi/Gujarati |
-| **GPT-4.1** for complex queries | Non-negotiable for accuracy — best-in-class for multi-step math, physics numericals. No other model matches it consistently |
-| **NOT Llama 4** | Good model, but costs more than GPT-4.1-mini and less accurate for Hindi/Gujarati math |
-| **NOT Claude** | Expensive output tokens ($15/1M); weaker on math than GPT-4.1 |
+| Our Choice                          | Why, Not Others                                                                                                             |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Phi-4-mini** for simple queries   | 50% cheaper than GPT-4.1-mini; equally accurate for definitions/factual recall; best Azure integration                      |
+| **GPT-4.1-mini** for medium queries | Has vision (Phi-4-mini doesn't); best price-to-quality for concept explanations; excellent Hindi/Gujarati                   |
+| **GPT-4.1** for complex queries     | Non-negotiable for accuracy — best-in-class for multi-step math, physics numericals. No other model matches it consistently |
+| **NOT Llama 4**                     | Good model, but costs more than GPT-4.1-mini and less accurate for Hindi/Gujarati math                                      |
+| **NOT Claude**                      | Expensive output tokens ($15/1M); weaker on math than GPT-4.1                                                               |
 
 ---
 
@@ -756,22 +769,22 @@ FORMULA 7: Customer Acquisition Cost (CAC) vs LTV
 
 ### Source Material
 
-| Board | Source | Classes | Languages | URL |
-|-------|--------|---------|-----------|-----|
-| **CBSE/NCERT** | NCERT Textbooks | 6–12 | English, Hindi | ncert.nic.in |
-| **CBSE/NCERT** | NCERT Exemplar | 6–12 | English, Hindi | ncert.nic.in |
-| **GSEB/GCERT** | GCERT Textbooks | 6–12 | Gujarati, English | gcert.gujarat.gov.in |
-| **Both** | Previous Year Papers | 10, 12 | All | Board websites |
+| Board          | Source               | Classes | Languages         | URL                  |
+| -------------- | -------------------- | ------- | ----------------- | -------------------- |
+| **CBSE/NCERT** | NCERT Textbooks      | 6–12    | English, Hindi    | ncert.nic.in         |
+| **CBSE/NCERT** | NCERT Exemplar       | 6–12    | English, Hindi    | ncert.nic.in         |
+| **GSEB/GCERT** | GCERT Textbooks      | 6–12    | Gujarati, English | gcert.gujarat.gov.in |
+| **Both**       | Previous Year Papers | 10, 12  | All               | Board websites       |
 
 ### Estimated Knowledge Base Size
 
-| Content | Pages | Chunks | Tokens |
-|---------|-------|--------|--------|
-| NCERT Textbooks (6-12, EN+HI) | ~15,000 | ~45,000 | ~22.5M |
-| GSEB Textbooks (6-12, GU+EN) | ~12,000 | ~36,000 | ~18M |
-| Exemplar + Solutions | ~5,000 | ~15,000 | ~7.5M |
-| Previous Year Papers | ~2,000 | ~6,000 | ~3M |
-| **Total** | **~34,000** | **~102,000** | **~51M** |
+| Content                       | Pages       | Chunks       | Tokens   |
+| ----------------------------- | ----------- | ------------ | -------- |
+| NCERT Textbooks (6-12, EN+HI) | ~15,000     | ~45,000      | ~22.5M   |
+| GSEB Textbooks (6-12, GU+EN)  | ~12,000     | ~36,000      | ~18M     |
+| Exemplar + Solutions          | ~5,000      | ~15,000      | ~7.5M    |
+| Previous Year Papers          | ~2,000      | ~6,000       | ~3M      |
+| **Total**                     | **~34,000** | **~102,000** | **~51M** |
 
 **One-time embedding cost**: 51M tokens × $0.02/1M = **~$1.02**
 
@@ -797,13 +810,13 @@ FORMULA 7: Customer Acquisition Cost (CAC) vs LTV
 
 ### PDF Extraction: Hybrid Strategy
 
-| Tool | PyMuPDF | Azure Document Intelligence |
-|------|---------|---------------------------|
-| **Cost** | **$0 (free forever)** | **$1.50 per 1,000 pages** |
-| **Digital PDFs** | ✅ 99% accurate | ✅ 90% accurate |
-| **Scanned PDFs** | ❌ Cannot read | ✅ 85-95% accurate |
-| **Hindi/Gujarati** | ✅ If Unicode fonts | ✅ Always (275+ languages) |
-| **Speed** | Instant (local) | ~2-5 seconds/page (cloud) |
+| Tool               | PyMuPDF               | Azure Document Intelligence |
+| ------------------ | --------------------- | --------------------------- |
+| **Cost**           | **$0 (free forever)** | **$1.50 per 1,000 pages**   |
+| **Digital PDFs**   | ✅ 99% accurate       | ✅ 90% accurate             |
+| **Scanned PDFs**   | ❌ Cannot read        | ✅ 85-95% accurate          |
+| **Hindi/Gujarati** | ✅ If Unicode fonts   | ✅ Always (275+ languages)  |
+| **Speed**          | Instant (local)       | ~2-5 seconds/page (cloud)   |
 
 ```
 For each PDF page:
@@ -821,6 +834,7 @@ For each PDF page:
 ```
 
 **One-time extraction cost breakdown**:
+
 - NCERT English + Hindi PDFs (digital): $0
 - GSEB Gujarati PDFs (mixed/scanned): ~$8.25
 - Previous Year Papers (scanned): ~$3.00
@@ -855,14 +869,14 @@ Week 3: Embed & Index
 
 ### Input Types We Handle
 
-| Input Type | Example | Script |
-|-----------|---------|--------|
-| English | "What is photosynthesis?" | Latin |
-| Hindi (Devanagari) | "प्रकाश संश्लेषण क्या है?" | Devanagari |
-| Hindi (Roman) | "photosynthesis kya hai?" | Latin |
-| Gujarati (Native) | "પ્રકાશસંશ્લેષણ એટલે શું?" | Gujarati |
-| Gujarati (Roman) | "prakash sanshleshan etle shu?" | Latin |
-| Mixed | "Class 10 ma photosynthesis samjhao" | Mixed |
+| Input Type         | Example                              | Script     |
+| ------------------ | ------------------------------------ | ---------- |
+| English            | "What is photosynthesis?"            | Latin      |
+| Hindi (Devanagari) | "प्रकाश संश्लेषण क्या है?"           | Devanagari |
+| Hindi (Roman)      | "photosynthesis kya hai?"            | Latin      |
+| Gujarati (Native)  | "પ્રકાશસંશ્લેષણ એટલે શું?"           | Gujarati   |
+| Gujarati (Roman)   | "prakash sanshleshan etle shu?"      | Latin      |
+| Mixed              | "Class 10 ma photosynthesis samjhao" | Mixed      |
 
 GPT-4.1 and Phi-4-mini natively understand all input forms. No separate translation pipeline is needed — building one would add cost and complexity with no accuracy benefit.
 
@@ -1008,13 +1022,13 @@ Avg similarity of top 5 results:
 
 ### Expected Query Distribution
 
-| Tier | % of Queries | Model | Cost/query (avg) |
-|------|-------------|-------|-----------------|
-| **0 — Cache** | 25% | None | ₹0.00 |
-| **1 — Simple** | 40% | Phi-4-mini | ₹0.11 |
-| **2 — Medium** | 15% | GPT-4.1-mini | ₹0.22 |
-| **3 — Complex** | 20% | GPT-4.1 | ₹3.50 |
-| **Weighted Average** | | | **₹0.83/query** |
+| Tier                 | % of Queries | Model        | Cost/query (avg) |
+| -------------------- | ------------ | ------------ | ---------------- |
+| **0 — Cache**        | 25%          | None         | ₹0.00            |
+| **1 — Simple**       | 40%          | Phi-4-mini   | ₹0.11            |
+| **2 — Medium**       | 15%          | GPT-4.1-mini | ₹0.22            |
+| **3 — Complex**      | 20%          | GPT-4.1      | ₹3.50            |
+| **Weighted Average** |              |              | **₹0.83/query**  |
 
 ---
 
@@ -1041,30 +1055,30 @@ STEP 1: Azure AI Search — "verified_answers" index (HNSW vector search)
 **Why it stays fast forever**: Azure AI Search uses HNSW (Hierarchical Navigable Small World) — it jumps through a graph structure instead of checking every answer one by one.
 
 | Cache Size | Brute Force | HNSW (our approach) |
-|-----------|------------|---------------------|
-| 5,000 | ~500ms | ~5ms |
-| 50,000 | ~5,000ms 🐌 | ~8ms |
-| 1,000,000 | impossible | ~12ms ✅ |
+| ---------- | ----------- | ------------------- |
+| 5,000      | ~500ms      | ~5ms                |
+| 50,000     | ~5,000ms 🐌 | ~8ms                |
+| 1,000,000  | impossible  | ~12ms ✅            |
 
 ### Building & Expanding the Cache
 
-| Step | What | Cost |
-|------|------|------|
-| 1. Collect questions | 500/subject × 10 subjects = 5,000 | ₹0 (crowdsource from teachers + textbooks) |
-| 2. Generate answers | Run through Javaab's own pipeline | ~₹2,350 ($28) |
-| 3. Verify answers | Teachers review via admin portal | ~₹15,000 ($179) |
-| 4. Store in cache | Index in AI Search + store in Redis | ₹0 |
-| 5. Monthly expansion | +500 answers based on top uncached queries | ~₹1,735/mo ($21) |
+| Step                 | What                                       | Cost                                       |
+| -------------------- | ------------------------------------------ | ------------------------------------------ |
+| 1. Collect questions | 500/subject × 10 subjects = 5,000          | ₹0 (crowdsource from teachers + textbooks) |
+| 2. Generate answers  | Run through Javaab's own pipeline          | ~₹2,350 ($28)                              |
+| 3. Verify answers    | Teachers review via admin portal           | ~₹15,000 ($179)                            |
+| 4. Store in cache    | Index in AI Search + store in Redis        | ₹0                                         |
+| 5. Monthly expansion | +500 answers based on top uncached queries | ~₹1,735/mo ($21)                           |
 
 ### Redis Memory Growth
 
-| Timeline | Answers | Memory Used | C0 Limit (250MB) |
-|----------|---------|------------|-------------------|
-| Launch | 5,000 | ~42 MB | ✅ Safe |
-| Year 1 | 11,000 | ~93 MB | ✅ Safe |
-| Year 2 | 17,000 | ~144 MB | ✅ Safe |
-| Year 3 | 23,000 | ~195 MB | ✅ Safe |
-| Year 4 | 29,000 | ~246 MB | ⚠️ Upgrade to C1 ($34/mo) |
+| Timeline | Answers | Memory Used | C0 Limit (250MB)          |
+| -------- | ------- | ----------- | ------------------------- |
+| Launch   | 5,000   | ~42 MB      | ✅ Safe                   |
+| Year 1   | 11,000  | ~93 MB      | ✅ Safe                   |
+| Year 2   | 17,000  | ~144 MB     | ✅ Safe                   |
+| Year 3   | 23,000  | ~195 MB     | ✅ Safe                   |
+| Year 4   | 29,000  | ~246 MB     | ⚠️ Upgrade to C1 ($34/mo) |
 
 ---
 
@@ -1132,7 +1146,7 @@ Ticket created in Cosmos DB with:
   status: "OPEN"
     │
     ▼
-Teacher Admin Portal (admin.tryjavaab.com)
+Teacher Admin Portal (app.tryjavaab.com/admin/teacher)
   - Reviews question and AI's previous attempts
   - Writes verified answer with Markdown + LaTeX support
   - Submits answer
@@ -1147,25 +1161,25 @@ AFTER RESOLUTION:
 
 ### Teacher Ticket Cost
 
-| Item | Monthly Cost |
-|------|-------------|
-| 5 teachers × ~2 hrs/month × ₹300/hr | ₹3,000 ($36) |
-| Expected: ~50 tickets/month per 1,000 students | |
-| **Total Teacher Ticket cost** | **~₹3,000/mo ($36)** |
+| Item                                           | Monthly Cost         |
+| ---------------------------------------------- | -------------------- |
+| 5 teachers × ~2 hrs/month × ₹300/hr            | ₹3,000 ($36)         |
+| Expected: ~50 tickets/month per 1,000 students |                      |
+| **Total Teacher Ticket cost**                  | **~₹3,000/mo ($36)** |
 
 ---
 
 ## 19. Accuracy & Reliability Safeguards
 
-| Layer | Method | Accuracy | Applies To |
-|-------|--------|----------|-----------|
-| **1. Verified Cache** | Expert-reviewed pre-built answers | 100% | 25% of queries |
-| **2. RAG Grounding** | Answer based on actual textbook chunks | ~95% | 67% of queries |
-| **3. Constrained LLM** | Low temperature (0.1-0.2), system prompt rules | ~90% | 5% of queries |
-| **4. Math Validation** | Cross-check numericals with SymPy library | Catches errors | All math queries |
-| **5. Confidence Scoring** | RAG similarity thresholds → disclaimers | Prevents false confidence | All queries |
-| **6. Feedback Loop** | Student 👍/👎 → flag bad answers → review | Continuous improvement | All queries |
-| **7. Teacher Ticket** | Human expert as last resort | 100% | < 0.5% (Pro only) |
+| Layer                     | Method                                         | Accuracy                  | Applies To        |
+| ------------------------- | ---------------------------------------------- | ------------------------- | ----------------- |
+| **1. Verified Cache**     | Expert-reviewed pre-built answers              | 100%                      | 25% of queries    |
+| **2. RAG Grounding**      | Answer based on actual textbook chunks         | ~95%                      | 67% of queries    |
+| **3. Constrained LLM**    | Low temperature (0.1-0.2), system prompt rules | ~90%                      | 5% of queries     |
+| **4. Math Validation**    | Cross-check numericals with SymPy library      | Catches errors            | All math queries  |
+| **5. Confidence Scoring** | RAG similarity thresholds → disclaimers        | Prevents false confidence | All queries       |
+| **6. Feedback Loop**      | Student 👍/👎 → flag bad answers → review      | Continuous improvement    | All queries       |
+| **7. Teacher Ticket**     | Human expert as last resort                    | 100%                      | < 0.5% (Pro only) |
 
 ---
 
@@ -1186,16 +1200,24 @@ tryjavaab.com                 → Marketing website
 app.tryjavaab.com            → Javaab AI web app (Vite + React)
   /login                   → Auth
   /onboarding              → First-time setup
-  /                        → Main chat interface (default)
-  /subjects                → Browse by subject
-  /tickets                 → Teacher tickets (Pro)
-  /settings                → Profile, subscription, language
+  /                        → Auth-aware redirect to login/onboarding/chat
+  /chat                    → Main chat interface
+  /tickets                 → Teacher ticket list
+  /tickets/:id             → Teacher ticket detail
+  /subscribe               → Plan selection + payment mock
+  /settings                → Profile, preferences, usage
+  /settings/subscription   → Subscription management
   /refer                   → Referral dashboard
+  /admin/teacher           → Teacher portal shell (role="teacher")
+  /admin/teacher/dashboard → Teacher queue dashboard
+  /admin/teacher/tickets   → Teacher ticket queue
+  /admin/teacher/tickets/:id → Teacher response detail
+  /admin/teacher/analytics → Teacher analytics
 
-admin.tryjavaab.com           → Internal admin + teacher portal
-  /teacher/dashboard       → Ticket dashboard
-  /teacher/tickets         → Ticket queue
-  /analytics               → Business analytics
+admin.tryjavaab.com           → Optional future alias to the same teacher portal
+  /teacher/dashboard       → Redirect/alias to app.tryjavaab.com/admin/teacher/dashboard
+  /teacher/tickets         → Redirect/alias to app.tryjavaab.com/admin/teacher/tickets
+  /teacher/analytics       → Redirect/alias to app.tryjavaab.com/admin/teacher/analytics
 
 api.tryjavaab.com             → Javaab API (future)
   /v1/ask                  → Query endpoint
@@ -1206,7 +1228,7 @@ docs.tryjavaab.com            → API documentation (future)
 CLOUDFLARE DNS SETUP:
   tryjavaab.com        → CNAME → existing hosting
   app.tryjavaab.com   → CNAME → Azure Static Web Apps
-  admin.tryjavaab.com  → CNAME → Azure Static Web Apps (separate deployment)
+  admin.tryjavaab.com  → CNAME → Azure Static Web Apps (optional alias/redirect)
   api.tryjavaab.com    → CNAME → Azure Container Apps (backend)
 ```
 
@@ -1369,22 +1391,32 @@ INTERACTION STYLE
 ### Vite Web App (app.tryjavaab.com)
 
 ```
-/app
-├── /(auth)
-│   ├── /login          → Phone OTP
-│   └── /onboarding     → Select board, class, language
-├── /(main)
-│   ├── /chat           → Main chat interface
-│   ├── /chat/[id]      → Conversation history
-│   ├── /subjects       → Browse by subject/chapter
-│   ├── /tickets        → Teacher Ticket status (Pro only)
-│   ├── /refer          → Referral dashboard
-│   └── /profile        → Settings, language, board, subscription
-├── /(admin)
-│   ├── /teacher        → Teacher ticket review portal
-│   └── /analytics      → Usage dashboard
-└── /components         → Shared UI components
+/web/src
+├── App.tsx
+│   ├── /                         → Auth-aware redirect
+│   ├── /login                    → Phone OTP
+│   ├── /onboarding               → Board, class, language, study preferences
+│   ├── /chat                     → Main chat interface
+│   ├── /tickets                  → Student ticket list
+│   ├── /tickets/:id              → Student ticket detail
+│   ├── /subscribe                → Upgrade flow
+│   ├── /refer                    → Referral dashboard
+│   ├── /settings                 → Profile, preferences, usage
+│   ├── /settings/subscription    → Subscription management
+│   └── /admin/teacher/*          → Teacher portal routes
+├── pages/admin/
+│   ├── TeacherLayout.tsx
+│   ├── TeacherDashboard.tsx
+│   ├── TeacherTickets.tsx
+│   ├── TeacherTicketDetail.tsx
+│   └── TeacherAnalytics.tsx
+├── components/                   → Shared UI + feature components
+├── hooks/                        → Auth, chat, pending plan
+├── lib/                          → Local domain stores and mocks
+└── services/api.ts               → FastAPI client + SSE streaming
 ```
+
+Current web MVP does not expose `/subjects`. Subject browsing remains a future UI feature; the backend endpoint `GET /subjects/{board}/{class_level}` is kept for compatibility.
 
 ### React Native Mobile App
 
@@ -1407,15 +1439,15 @@ INTERACTION STYLE
 
 ### Key Frontend Requirements
 
-| Feature | Priority | Details |
-|---------|----------|---------|
-| LaTeX Math Rendering | P0 | KaTeX (web), react-native-math-view (mobile) |
-| Image Capture & Compress | P0 | < 1MB JPEG, client-side |
-| Streaming Responses | P0 | SSE for typewriter effect |
-| Devanagari + Gujarati Fonts | P0 | Noto Sans families |
-| Offline Mode | P1 | Cache last 50 Q&As locally |
-| Dark Mode | P2 | Night study eye strain |
-| Teacher Ticket UI | P1 | Pro only — status tracking |
+| Feature                     | Priority | Details                                      |
+| --------------------------- | -------- | -------------------------------------------- |
+| LaTeX Math Rendering        | P0       | KaTeX (web), react-native-math-view (mobile) |
+| Image Capture & Compress    | P0       | < 1MB JPEG, client-side                      |
+| Streaming Responses         | P0       | SSE for typewriter effect                    |
+| Devanagari + Gujarati Fonts | P0       | Noto Sans families                           |
+| Offline Mode                | P1       | Cache last 50 Q&As locally                   |
+| Dark Mode                   | P2       | Night study eye strain                       |
+| Teacher Ticket UI           | P1       | Pro only — status tracking                   |
 
 ---
 
@@ -1424,47 +1456,67 @@ INTERACTION STYLE
 ### Core Endpoints
 
 ```
-POST /api/v1/chat/ask
-─────────────────────
+CURRENT APP BACKEND (FastAPI, mounted without /api/v1)
+
+POST /chat/ask
+──────────────
 Body:
 {
-  "message": "string (optional)",
-  "image": "base64 (optional)",
-  "conversation_id": "uuid (optional)",
-  "student_profile": {
-    "class_level": 10,
-    "board": "CBSE",
-    "preferred_language": "hi",
-    "tier": "pro"
-  }
+  "query": "string (optional)",
+  "image_base64": "base64 without data URL prefix (optional)",
+  "user_id": "phone or user id",
+  "board": "cbse | gseb",
+  "class_level": 10,
+  "subject": "string (optional)",
+  "language": "en | hi | gu"
 }
 Response (SSE streamed):
 {
-  "conversation_id": "uuid",
-  "answer": "Markdown + LaTeX",
+  "type": "chunk | metadata | sources | done",
+  "content": "Markdown + LaTeX chunk",
   "sources": [{ "book": "...", "chapter": "...", "page": 95 }],
-  "detected_language": "hi",
   "model_used": "phi-4-mini",
-  "confidence": "high",
-  "from_cache": false,
-  "can_raise_ticket": false
+  "confidence": "high"
 }
 
-POST /api/v1/chat/feedback
-{ "message_id": "uuid", "rating": "up", "feedback_text": "" }
+POST /chat/feedback
+{ "message_id": "uuid", "is_positive": true, "reason": "" }
 
-POST /api/v1/tickets/create    (PRO ONLY)
-{ "conversation_id": "uuid", "message_id": "uuid" }
+POST /tickets/create
+{
+  "user_id": "string",
+  "question": "string",
+  "image_base64": "string (optional)",
+  "board": "cbse | gseb",
+  "class_level": 10,
+  "subject": "string (optional)",
+  "ai_attempts": ["..."]
+}
 
-GET  /api/v1/tickets           (PRO ONLY)
-GET  /api/v1/tickets/{id}      (PRO ONLY)
+GET  /tickets
+GET  /tickets/{ticket_id}
 
-POST /api/v1/admin/tickets/{id}/respond   (TEACHER PORTAL)
-{ "teacher_answer": "...", "verified": true }
+GET  /admin/tickets
+POST /admin/tickets/{ticket_id}/assign
+POST /admin/tickets/{ticket_id}/respond
+{ "teacher_id": "string", "answer": "...", "source_citation": "optional" }
 
-GET  /api/v1/subjects/{board}/{class_level}
-GET  /api/v1/student/profile
-POST /api/v1/student/profile
+GET  /subjects
+GET  /subjects/{board}/{class_level}
+GET  /subjects/{subject_id}/chapters
+
+POST /student/profile
+{ "phone": "string", "isOnboarded": true, "board": "cbse", "classNum": 10, ... }
+
+POST /auth/register
+POST /auth/login
+GET  /auth/profile
+
+GET  /health
+
+FUTURE PUBLIC DEVELOPER API
+The B2B Javaab API will use `/api/v1/*` routes with API-key auth, metering,
+and public documentation at docs.tryjavaab.com.
 ```
 
 ### Streaming Response Format (SSE)
@@ -1538,12 +1590,12 @@ OTHER APPS can call our API to get curriculum-aligned answers.
 
 ### Target Customers
 
-| Customer Type | Use Case | Revenue |
-|--------------|----------|---------|
-| EdTech startups | Integrate textbook Q&A into their apps | Per-query pricing |
-| School ERP vendors | Add AI tutor feature to existing software | Per-query + monthly |
-| Content platforms | Auto-generate explanations for questions | Per-query |
-| Coaching app builders | White-label AI tutor | Monthly license |
+| Customer Type         | Use Case                                  | Revenue             |
+| --------------------- | ----------------------------------------- | ------------------- |
+| EdTech startups       | Integrate textbook Q&A into their apps    | Per-query pricing   |
+| School ERP vendors    | Add AI tutor feature to existing software | Per-query + monthly |
+| Content platforms     | Auto-generate explanations for questions  | Per-query           |
+| Coaching app builders | White-label AI tutor                      | Monthly license     |
 
 ### API Design (Future)
 
@@ -1566,12 +1618,12 @@ Body:
 
 ### API Pricing (Future — Profitable by Design)
 
-| Tier | Price | Queries/month | Cost to us | Margin |
-|------|-------|--------------|-----------|--------|
-| Starter | $49/mo | 5,000 | ~$25 | ~48% |
-| Growth | $199/mo | 25,000 | ~$125 | ~37% |
-| Scale | $499/mo | 100,000 | ~$400 | ~20% |
-| Enterprise | Custom | Unlimited | Negotiated | 25%+ |
+| Tier       | Price   | Queries/month | Cost to us | Margin |
+| ---------- | ------- | ------------- | ---------- | ------ |
+| Starter    | $49/mo  | 5,000         | ~$25       | ~48%   |
+| Growth     | $199/mo | 25,000        | ~$125      | ~37%   |
+| Scale      | $499/mo | 100,000       | ~$400      | ~20%   |
+| Enterprise | Custom  | Unlimited     | Negotiated | 25%+   |
 
 **No new infrastructure needed** — Javaab API uses the same backend, same RAG, same models, same cache. Adding the API only requires new routes with API key auth + metered billing.
 
@@ -1610,29 +1662,29 @@ WHY NOT NOW:
 
 ## 27. MVP Roadmap
 
-| Week | What | Deliverable |
-|------|------|-------------|
-| 1-2 | Knowledge base build (PDF extract, chunk, embed, index) | Azure AI Search ready |
-| 3-4 | Backend API (FastAPI, model router, RAG, cache, auth) | Working /chat/ask |
-| 5-6 | Web app (Vite on app.tryjavaab.com, Swiggy-style design) | Live web chat |
-| 7-8 | Mobile app (React Native), payment (Razorpay), referral system | Mobile beta |
-| 9-10 | Teacher portal, tickets, verified cache (5,000 answers) | Admin ready |
-| 11-12 | Testing, beta (50 students), bug fixes, launch | **🚀 LAUNCH** |
+| Week  | What                                                           | Deliverable           |
+| ----- | -------------------------------------------------------------- | --------------------- |
+| 1-2   | Knowledge base build (PDF extract, chunk, embed, index)        | Azure AI Search ready |
+| 3-4   | Backend API (FastAPI, model router, RAG, cache, auth)          | Working /chat/ask     |
+| 5-6   | Web app (Vite on app.tryjavaab.com, Swiggy-style design)       | Live web chat         |
+| 7-8   | Mobile app (React Native), payment (Razorpay), referral system | Mobile beta           |
+| 9-10  | Teacher portal, tickets, verified cache (5,000 answers)        | Admin ready           |
+| 11-12 | Testing, beta (50 students), bug fixes, launch                 | **🚀 LAUNCH**         |
 
 ### One-Time Launch Costs
 
-| Item | Cost (₹) |
-|------|----------|
-| PDF extraction (hybrid) | ₹950 |
-| Embedding generation | ₹86 |
-| Verified answer bank (AI generation) | ₹2,350 |
-| Verified answer bank (teacher review) | ₹15,000 |
-| Google Play developer | ₹2,100 |
-| Apple Developer (annual) | ₹8,400 |
-| Cursor Pro (3 months) | ₹5,040 |
-| Replit (1 month Core) | ₹2,100 |
-| Lovable Pro (1 month) | ₹2,100 |
-| **Total** | **₹38,126 (~$454)** |
+| Item                                  | Cost (₹)            |
+| ------------------------------------- | ------------------- |
+| PDF extraction (hybrid)               | ₹950                |
+| Embedding generation                  | ₹86                 |
+| Verified answer bank (AI generation)  | ₹2,350              |
+| Verified answer bank (teacher review) | ₹15,000             |
+| Google Play developer                 | ₹2,100              |
+| Apple Developer (annual)              | ₹8,400              |
+| Cursor Pro (3 months)                 | ₹5,040              |
+| Replit (1 month Core)                 | ₹2,100              |
+| Lovable Pro (1 month)                 | ₹2,100              |
+| **Total**                             | **₹38,126 (~$454)** |
 
 ---
 
@@ -1672,8 +1724,9 @@ RULE 4: USE IMAGE WISELY (Plus/Pro only)
 TIPS: Good lighting, crop to show ONLY the question,
       add text alongside: [photo] + "Solve — Class 10 Maths Ch.4"
 
-RULE 5: USE THE SUBJECT BROWSER (FREE — no query used)
-  app.tryjavaab.com/subjects
+RULE 5: KEEP PROFILE CONTEXT UPDATED (FREE — no query used)
+  app.tryjavaab.com/settings
+  Board, class, and language context help Javaab answer accurately.
 
 RULE 6: RATE EVERY ANSWER (👍/👎) — does NOT cost a query
   Rating helps Javaab give YOU better answers over time.
@@ -1700,7 +1753,7 @@ QUERY BUDGET PLANNER (Free plan: 50 queries/month):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 QUESTION PAPER GENERATOR
-1. admin.tryjavaab.com → Question Papers
+1. app.tryjavaab.com/admin/teacher → Question Papers (future Custom-plan module)
 2. Select board, class, subject, chapters
 3. Set difficulty mix: Easy/Medium/Hard
 4. Set question types and marks
@@ -1708,14 +1761,14 @@ QUESTION PAPER GENERATOR
 TIP: Generate Sets A, B, C for the same exam to prevent cheating.
 
 LESSON PLAN BUILDER
-1. admin.tryjavaab.com → Lesson Plans
+1. app.tryjavaab.com/admin/teacher → Lesson Plans (future Custom-plan module)
 2. Select chapter + number of periods
 3. AI creates period-wise plan
 4. Edit and customize to your style → Export as PDF
 TIP: Use "activity mode" for practical/lab chapters.
 
 TEACHER TICKET ANSWERING
-1. Check admin.tryjavaab.com/teacher/tickets daily
+1. Check app.tryjavaab.com/admin/teacher/tickets daily
 2. AI already attempted an answer — review it first
 3. Your corrections make the system smarter
    (Every answer you provide helps ALL future students!)
@@ -1723,7 +1776,7 @@ TEACHER TICKET ANSWERING
 5. Use LaTeX for math: wrap formulas in \( ... \)
 
 STUDENT MONITORING
-1. admin.tryjavaab.com → Analytics
+1. app.tryjavaab.com/admin/teacher/analytics
 2. See which topics students ask about most
 3. Identify weak areas across your class
 4. Focus teaching time on high-query topics
@@ -1736,48 +1789,48 @@ STUDENT MONITORING
 
 ### ✅ ADDED
 
-| # | Feature | Reason |
-|---|---------|--------|
-| 1 | **Javaab API** (future B2B product) | Revenue diversification; same infra powers both products |
-| 2 | **Custom Plan** with formula-based pricing | B2B coaching/schools = primary profit center |
-| 3 | **Question Paper Generator** (Custom) | High-value feature teachers will pay for |
-| 4 | **Lesson Plan Builder** (Custom) | High-value for coaching institutes |
-| 5 | **Referral system** | CAC of ₹30 vs ₹200-500 for ads |
-| 6 | **Razorpay integration** with GST breakdown | Complete payment pipeline |
-| 7 | **Query counting clarification** (message-based) | Critical for billing clarity |
-| 8 | **GST (18%)** on all calculations | Legal compliance for Indian SaaS |
-| 9 | **Azure Key Vault** | Security best practice |
-| 10 | **Azure Container Registry** | Required for Container Apps deployments |
-| 11 | **Azure Container Apps** (replaces App Service) | True auto-scale to zero |
-| 12 | **Voice input** (future roadmap documented) | Architecture readiness |
-| 13 | **Domain/URL architecture** | Cloudflare + subdomains |
-| 14 | **Break-even formulas** | Mathematical financial planning |
-| 15 | **Student/Teacher cheat sheets** | Onboarding material |
-| 16 | **Pricing viability analysis** (honest) | Transparent B2C loss-leader strategy |
-| 17 | **Swiggy-style design direction** | Modern Indian startup aesthetic |
+| #   | Feature                                          | Reason                                                   |
+| --- | ------------------------------------------------ | -------------------------------------------------------- |
+| 1   | **Javaab API** (future B2B product)              | Revenue diversification; same infra powers both products |
+| 2   | **Custom Plan** with formula-based pricing       | B2B coaching/schools = primary profit center             |
+| 3   | **Question Paper Generator** (Custom)            | High-value feature teachers will pay for                 |
+| 4   | **Lesson Plan Builder** (Custom)                 | High-value for coaching institutes                       |
+| 5   | **Referral system**                              | CAC of ₹30 vs ₹200-500 for ads                           |
+| 6   | **Razorpay integration** with GST breakdown      | Complete payment pipeline                                |
+| 7   | **Query counting clarification** (message-based) | Critical for billing clarity                             |
+| 8   | **GST (18%)** on all calculations                | Legal compliance for Indian SaaS                         |
+| 9   | **Azure Key Vault**                              | Security best practice                                   |
+| 10  | **Azure Container Registry**                     | Required for Container Apps deployments                  |
+| 11  | **Azure Container Apps** (replaces App Service)  | True auto-scale to zero                                  |
+| 12  | **Voice input** (future roadmap documented)      | Architecture readiness                                   |
+| 13  | **Domain/URL architecture**                      | Cloudflare + subdomains                                  |
+| 14  | **Break-even formulas**                          | Mathematical financial planning                          |
+| 15  | **Student/Teacher cheat sheets**                 | Onboarding material                                      |
+| 16  | **Pricing viability analysis** (honest)          | Transparent B2C loss-leader strategy                     |
+| 17  | **Swiggy-style design direction**                | Modern Indian startup aesthetic                          |
 
 ### ❌ DROPPED
 
-| # | Feature | Reason |
-|---|---------|--------|
-| 1 | **Azure Event Hub** | Overkill for <1L users |
-| 2 | **Azure Service Bus / PubSub** | Synchronous API fine for current scale |
-| 3 | **Kubernetes (AKS)** | Container Apps gives same scaling without K8s complexity |
-| 4 | **Azure SQL / PostgreSQL** | Cosmos DB free tier covers all needs |
-| 5 | **Azure App Service** | Replaced by Container Apps (strictly better) |
-| 6 | **5 scale tiers** | Simplified to 3 tiers |
+| #   | Feature                        | Reason                                                   |
+| --- | ------------------------------ | -------------------------------------------------------- |
+| 1   | **Azure Event Hub**            | Overkill for <1L users                                   |
+| 2   | **Azure Service Bus / PubSub** | Synchronous API fine for current scale                   |
+| 3   | **Kubernetes (AKS)**           | Container Apps gives same scaling without K8s complexity |
+| 4   | **Azure SQL / PostgreSQL**     | Cosmos DB free tier covers all needs                     |
+| 5   | **Azure App Service**          | Replaced by Container Apps (strictly better)             |
+| 6   | **5 scale tiers**              | Simplified to 3 tiers                                    |
 
 ### 🔄 CHANGED
 
-| # | What | V2 | V3 |
-|---|------|----|----|
-| 1 | Backend hosting | App Service B1 ($13) | Container Apps (auto-scale, ~$0-50) |
-| 2 | Free plan | 5 queries/day | 50 queries/month |
-| 3 | Plus plan | ₹79/mo, 30 queries/day | ₹199/mo, 1,000 queries/month |
-| 4 | Pro plan | ₹149/mo, unlimited | ₹499/mo, unlimited |
-| 5 | Scale tiers | 5 tiers | 3 tiers (1K, 10K, 1L) |
-| 6 | Pricing model | Per-day limits | Per-month limits (message-based) |
-| 7 | Revenue analysis | Optimistic | Honest (B2C is loss-leader) |
+| #   | What             | V2                     | V3                                  |
+| --- | ---------------- | ---------------------- | ----------------------------------- |
+| 1   | Backend hosting  | App Service B1 ($13)   | Container Apps (auto-scale, ~$0-50) |
+| 2   | Free plan        | 5 queries/day          | 50 queries/month                    |
+| 3   | Plus plan        | ₹79/mo, 30 queries/day | ₹199/mo, 1,000 queries/month        |
+| 4   | Pro plan         | ₹149/mo, unlimited     | ₹499/mo, unlimited                  |
+| 5   | Scale tiers      | 5 tiers                | 3 tiers (1K, 10K, 1L)               |
+| 6   | Pricing model    | Per-day limits         | Per-month limits (message-based)    |
+| 7   | Revenue analysis | Optimistic             | Honest (B2C is loss-leader)         |
 
 ---
 
@@ -1785,26 +1838,26 @@ STUDENT MONITORING
 
 ### Tool Overview & Prompt Count
 
-| Tool | Prompts | Purpose | Days |
-|------|---------|---------|------|
-| **Lovable** | 9 prompts (L1-L9) | Web UI design | 1-3 |
-| **Cursor** | 23 prompts (C0-C22) | Backend, integration, deployment, testing | 4-27 |
-| **Replit** | 5 prompts (R1-R5) | Mobile app | 15-22 |
-| **Total** | **37 prompts** | **Zero to launched app** | **30 days** |
+| Tool        | Prompts             | Purpose                                   | Days        |
+| ----------- | ------------------- | ----------------------------------------- | ----------- |
+| **Lovable** | 9 prompts (L1-L9)   | Web UI design                             | 1-3         |
+| **Cursor**  | 23 prompts (C0-C22) | Backend, integration, deployment, testing | 4-27        |
+| **Replit**  | 5 prompts (R1-R5)   | Mobile app                                | 15-22       |
+| **Total**   | **37 prompts**      | **Zero to launched app**                  | **30 days** |
 
 ### Quick Reference: Which Tool, When
 
-| Day | Tool | What You're Building |
-|-----|------|---------------------|
-| 1-3 | **Lovable** | All web UI screens (L1-L9) |
-| 4-5 | **Cursor** | Project scaffolding + system prompt (C0-C2) |
-| 6-8 | **Cursor** | Model router + RAG + cache + LLM services (C3-C7) |
-| 9-12 | **Cursor** | Chat endpoint + image + tickets (C8-C10) |
-| 13-17 | **Cursor** | Connect frontend to backend (C11-C12) |
-| 15-22 | **Replit** | React Native mobile app (R1-R5) |
-| 18-22 | **Cursor** | Admin portal + teacher system (C13) |
-| 23-27 | **Cursor** | Azure deployment + monitoring (C14-C15) |
-| 28-30 | **Cursor** | Testing + seed data + launch (C16-C18) + Razorpay + Referral + QPG (C19-C22) |
+| Day   | Tool        | What You're Building                                                         |
+| ----- | ----------- | ---------------------------------------------------------------------------- |
+| 1-3   | **Lovable** | All web UI screens (L1-L9)                                                   |
+| 4-5   | **Cursor**  | Project scaffolding + system prompt (C0-C2)                                  |
+| 6-8   | **Cursor**  | Model router + RAG + cache + LLM services (C3-C7)                            |
+| 9-12  | **Cursor**  | Chat endpoint + image + tickets (C8-C10)                                     |
+| 13-17 | **Cursor**  | Connect frontend to backend (C11-C12)                                        |
+| 15-22 | **Replit**  | React Native mobile app (R1-R5)                                              |
+| 18-22 | **Cursor**  | Admin portal + teacher system (C13)                                          |
+| 23-27 | **Cursor**  | Azure deployment + monitoring (C14-C15)                                      |
+| 28-30 | **Cursor**  | Testing + seed data + launch (C16-C18) + Razorpay + Referral + QPG (C19-C22) |
 
 ---
 
@@ -1845,7 +1898,7 @@ Gujarati in both native scripts and Roman transliteration.
 - AI Models: Azure OpenAI (GPT-4.1, GPT-4.1-mini), Azure AI Foundry (Phi-4-mini)
 - Embeddings: text-embedding-3-small via Azure OpenAI
 - Storage: Azure Blob Storage
-- Auth: Azure AD B2C (phone OTP)
+- Auth: current MVP uses local phone OTP mock + backend registration stub; production target is Azure AD B2C phone OTP
 - Hosting: Azure Container Apps (backend), Azure Static Web Apps (frontend)
 
 ## Code Style Rules
@@ -1853,14 +1906,14 @@ Gujarati in both native scripts and Roman transliteration.
 - TypeScript: Strict mode, no `any` types, use interfaces for objects
 - React: Functional components only, hooks, no class components
 - Naming: snake_case for Python, camelCase for TypeScript, PascalCase for components
-- All API responses: { success, data, error, metadata }
+- Current API responses are endpoint-specific JSON plus SSE for chat streaming; future public `/api/v1/*` endpoints should standardize on `{ success, data, error, metadata }`
 - All environment variables: in .env files, never hardcoded
 - Every function must have a docstring/JSDoc comment
 - Error handling: Never silently catch errors, always log and return meaningful messages
 
 ## Architecture Rules
 - Backend: routes → services → repositories (clean architecture)
-- Frontend: feature-based folder structure; server components where possible, client components for interactivity (`"use client"`)
+- Frontend: Vite + React SPA, feature-based folders, React Router for navigation
 - All AI model calls go through central ModelRouter service
 - All database operations through repository classes
 - Redis: ONLY for verified answer storage (key-value by ID)
@@ -1884,13 +1937,13 @@ Gujarati in both native scripts and Roman transliteration.
 #### PROMPT L1: Update Existing Website Pricing Page
 
 ```
-Update the existing tryjavaab.com marketing website. This is a PURE marketing site — 
+Update the existing tryjavaab.com marketing website. This is a PURE marketing site —
 no auth, no payments. Every CTA redirects to app.tryjavaab.com.
 
 === PRICING PAGE ===
 
-Design: Swiggy-inspired. White bg (#FAFAFA), Cabinet Grotesk headings (font-black), 
-Outfit body, brand orange #FC8019 + near-black #1E1E1E, rounded-3xl cards, 
+Design: Swiggy-inspired. White bg (#FAFAFA), Cabinet Grotesk headings (font-black),
+Outfit body, brand orange #FC8019 + near-black #1E1E1E, rounded-3xl cards,
 generous whitespace. Mobile-first.
 
 Annual/Monthly toggle at top. Default: Monthly. Annual shows "Save 20%" badge.
@@ -1950,7 +2003,7 @@ Build the authentication screen for app.tryjavaab.com.
 
 BEHAVIOR:
 - Any unauthenticated visit to app.tryjavaab.com (any route) → redirect to /login
-- If URL had ?plan=plus or ?plan=pro, preserve it through auth → trigger upgrade 
+- If URL had ?plan=plus or ?plan=pro, preserve it through auth → trigger upgrade
   flow automatically after login/onboarding
 
 DESIGN:
@@ -1958,14 +2011,14 @@ Split layout on desktop (50/50). Single column on mobile. Swiggy-inspired. White
 
 LEFT PANEL (branding):
   Large Cabinet Grotesk heading: "Sawaal kuch bhi ho."
-  Sub: "Javaab turant milega." 
+  Sub: "Javaab turant milega."
   Small floating chips showing sample questions in EN/HI/GU:
     "What is photosynthesis?" | "ન્યૂટનના નિયમ સમજાવો" | "त्रिकोणमिति का सूत्र"
   Brand orange bg (#FC8019) with subtle pattern/texture, white text.
 
 RIGHT PANEL (auth form):
   Javaab logo at top.
-  
+
   STEP 1 — Phone Entry:
     Heading: "Enter your mobile number"
     Subtext: "We'll send you a 6-digit OTP. No password needed."
@@ -2024,7 +2077,7 @@ Large celebratory animation (confetti burst, not lottie dependency — CSS only)
 Show their profile summary: Board | Class | Language
 Two CTAs:
   Primary: "Ask my first question →" → /chat
-  Secondary: "Browse subjects first" → /subjects
+  Secondary: "Review my settings" → /settings
 
 After onboarding completes:
   If URL had ?plan=plus or ?plan=pro → redirect to /subscribe?plan=plus/pro
@@ -2045,7 +2098,7 @@ Top: Javaab logo + "New Chat" button (orange, rounded-full)
 Middle: Conversation history list (date-grouped: Today, Yesterday, This Week)
   Each item: truncated question, subject chip, timestamp
   Active conversation: orange left border
-Bottom: 
+Bottom:
   User avatar + name + tier badge (Free/Plus/Pro pill)
   Settings gear icon
 
@@ -2087,10 +2140,14 @@ When query limit reached, inline message in chat:
   These open the subscription modal (built in L7).
 ```
 
-#### PROMPT L5: Subject Browser
+#### PROMPT L5: Subject Browser (Future Backlog)
 
 ```
-Build the subject browser at app.tryjavaab.com/subjects.
+Build the subject browser only after the chat, tickets, subscription, settings,
+and teacher portal flows are stable. The current web MVP does not register
+`/subjects`; when this feature is added, register the route in `web/src/App.tsx`.
+
+Target future route: app.tryjavaab.com/subjects.
 
 === TOP BAR ===
 Board toggle: CBSE | GSEB (pill toggle, persists to user profile)
@@ -2103,7 +2160,7 @@ Subjects with icons + color accents:
   📚 English (purple) | 📝 Hindi — CBSE / ✏️ Gujarati — GSEB only
 
 Each card:
-  Subject icon (large), subject name, "X chapters", "Y questions answered" 
+  Subject icon (large), subject name, "X chapters", "Y questions answered"
   Mini progress bar (% of chapters explored)
   Hover: slight lift + shadow
 
@@ -2188,8 +2245,7 @@ Full-screen success screen (not a modal):
   "You're now a Javaab [Plus/Pro] member! 🎉"
   Show new benefit unlocked (e.g., "You now have 1,000 questions this month")
   "Start asking →" button → /chat
-  Small text: "Invoice sent to your registered email" (if email collected) or 
-  "Download invoice" link
+  Small text: "Download invoice" link
 
 === SETTINGS > SUBSCRIPTION (/settings/subscription) ===
 Current plan display: tier badge, billing date, queries used this month
@@ -2244,12 +2300,14 @@ Include all screens built in L1-L8.
 Folder structure within the export:
   /app/(auth)/login         → L2 auth screens
   /app/(auth)/onboarding    → L3 onboarding
-  /app/(main)/chat          → L4 chat interface  
-  /app/(main)/subjects      → L5 subject browser
+  /app/(main)/chat          → L4 chat interface
+  /app/(main)/subjects      → L5 subject browser (future/backlog)
   /app/(main)/tickets       → L6 teacher tickets
   /app/(main)/subscribe     → L7 subscription + payment
   /app/(main)/refer         → L8 referral
   /app/(main)/settings      → settings shell
+  /app/(main)/settings/subscription → subscription settings
+  /app/(admin)/teacher/*    → teacher portal routes
 
 Ensure all internal links use React Router <Link> components.
 All ?plan= query params are read and stored in sessionStorage
@@ -2619,9 +2677,10 @@ Usage:
 
 1. API client service (web/src/services/api.ts):
    - Base URL from environment variable
-   - JWT auth in httpOnly cookie
+   - Current MVP: localStorage-backed auth state plus backend registration/profile calls
+   - Production target: JWT/session auth in httpOnly cookie
    - SSE streaming support for chat
-   - Image upload with multipart/form-data
+   - Image compression client-side and base64 payloads for chat/ticket APIs
    - Error handling with user-friendly messages
 
 2. Connect Chat Interface to POST /chat/ask:
@@ -2634,7 +2693,7 @@ Usage:
 
 3. Connect feedback buttons (👍/👎) to POST /chat/feedback
 4. Connect onboarding to POST /auth/register and POST /student/profile
-5. Connect subject browser to GET /subjects/{board}/{class}
+5. Keep GET /subjects/{board}/{class_level} available for the future subject browser
 
 6. Add LaTeX rendering:
    - Install KaTeX
@@ -3153,4 +3212,4 @@ uv pip install -r requirements.txt
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-*End of Javaab Complete Technical Plan V3*
+_End of Javaab Complete Technical Plan V3_

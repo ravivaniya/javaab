@@ -28,13 +28,10 @@ interface Props {
   onOpenChange: (v: boolean) => void;
 }
 
-const SUBJECTS = ["Mathematics", "Science", "Social Science", "English", "Hindi", "Gujarati"];
-
 export function RaiseTicketDialog({ open, onOpenChange }: Props) {
   const { user } = useAuth();
   const { toast } = useToast();
   const nav = useNavigate();
-  const [subject, setSubject] = useState("Science");
   const [question, setQuestion] = useState("");
   const [aiAttempt, setAiAttempt] = useState("");
 
@@ -42,7 +39,6 @@ export function RaiseTicketDialog({ open, onOpenChange }: Props) {
     if (!user || !question.trim()) return;
     const t = createTicket(user.phone, {
       question: question.trim(),
-      subject,
       aiAttempt: aiAttempt.trim() || undefined,
     });
     toast({
@@ -69,23 +65,6 @@ export function RaiseTicketDialog({ open, onOpenChange }: Props) {
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div>
-            <Label htmlFor="t-subject" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Subject
-            </Label>
-            <Select value={subject} onValueChange={setSubject}>
-              <SelectTrigger id="t-subject">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SUBJECTS.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
           <div>
             <Label htmlFor="t-q" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">

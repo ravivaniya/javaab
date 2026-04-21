@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { BookOpen, ChevronDown, ThumbsDown, ThumbsUp, ShieldCheck, Sparkles, AlertTriangle } from "lucide-react";
 import { ChatMessage } from "@/lib/chat";
-import { MarkdownWithMath } from "./MarkdownWithMath";
+import { Markdown } from "./Markdown";
+import { TypingDots } from "./TypingDots";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { TypingDots } from "./TypingDots";
-import { ApiService } from "@/services/api";
 
 interface Props {
   message: ChatMessage;
@@ -33,15 +32,6 @@ export function MessageBubble({ message }: Props) {
   const [showSource, setShowSource] = useState(false);
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
 
-  const handleFeedback = (type: "up" | "down") => {
-    if (feedback === type) {
-      setFeedback(null);
-    } else {
-      setFeedback(type);
-      ApiService.sendFeedback(message.id, type === "up").catch(console.error);
-    }
-  };
-
   if (message.role === "user") {
     return (
       <div className="flex w-full justify-end">
@@ -60,67 +50,68 @@ export function MessageBubble({ message }: Props) {
   }
 
   const meta = CONFIDENCE_META[message.confidence ?? "ai"];
+  const hasContent = message.content.trim().length > 0;
 
   return (
     <div className="flex w-full justify-start">
       <div className="max-w-[92%] space-y-3 rounded-3xl rounded-tl-md bg-card px-5 py-4 shadow-sm ring-1 ring-border/50 sm:max-w-[80%]">
-        {!message.content ? <TypingDots /> : <MarkdownWithMath>{message.content}</MarkdownWithMath>}
+        {!hasContent ? <TypingDots /> : <Markdown>{message.content}</Markdown>}
 
-        {message.content && (
-        <>
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-          {message.source && (
-            <button
-              onClick={() => setShowSource((v) => !v)}
-              className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/70"
-            >
-              <BookOpen className="h-3.5 w-3.5" />
-              Source
-              <ChevronDown
-                className={cn("h-3.5 w-3.5 transition-transform", showSource && "rotate-180")}
-              />
-            </button>
-          )}
+        {hasContent && (
+          <>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {message.source && (
+                <button
+                  onClick={() => setShowSource((v) => !v)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/70"
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                  Source
+                  <ChevronDown
+                    className={cn("h-3.5 w-3.5 transition-transform", showSource && "rotate-180")}
+                  />
+                </button>
+              )}
 
-          <span
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
-              meta.className,
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
+                  meta.className,
+                )}
+              >
+                <meta.Icon className="h-3.5 w-3.5" />
+                {meta.label}
+              </span>
+
+              <div className="ml-auto flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn("h-7 w-7", feedback === "up" && "text-primary")}
+                  onClick={() => setFeedback(feedback === "up" ? null : "up")}
+                  aria-label="Helpful"
+                >
+                  <ThumbsUp className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn("h-7 w-7", feedback === "down" && "text-destructive")}
+                  onClick={() => setFeedback(feedback === "down" ? null : "down")}
+                  aria-label="Not helpful"
+                >
+                  <ThumbsDown className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+
+            {showSource && message.source && (
+              <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground animate-fade-in">
+                <p className="font-semibold text-foreground">{message.source.book}</p>
+                <p>{message.source.chapter}</p>
+              </div>
             )}
-          >
-            <meta.Icon className="h-3.5 w-3.5" />
-            {meta.label}
-          </span>
-
-          <div className="ml-auto flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn("h-7 w-7", feedback === "up" && "text-primary")}
-              onClick={() => handleFeedback("up")}
-              aria-label="Helpful"
-            >
-              <ThumbsUp className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn("h-7 w-7", feedback === "down" && "text-destructive")}
-              onClick={() => handleFeedback("down")}
-              aria-label="Not helpful"
-            >
-              <ThumbsDown className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
-
-        {showSource && message.source && (
-          <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground animate-fade-in">
-            <p className="font-semibold text-foreground">{message.source.book}</p>
-            <p>{message.source.chapter}</p>
-          </div>
-        )}
-        </>
+          </>
         )}
       </div>
     </div>

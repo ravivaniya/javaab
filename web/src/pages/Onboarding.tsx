@@ -33,31 +33,41 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
 
+  const [name, setName] = useState<string>(user?.name ?? "");
   const [board, setBoard] = useState<Board | undefined>(user?.board);
-  const [attendsCoaching, setAttendsCoaching] = useState<boolean | undefined>(user?.attendsCoaching);
+  const [attendsCoaching, setAttendsCoaching] = useState<boolean | undefined>(
+    user?.attendsCoaching,
+  );
   const [classNum, setClassNum] = useState<number | undefined>(user?.classNum);
   const [difficultSubjects, setDifficultSubjects] = useState<DifficultSubject[]>(
     user?.difficultSubjects ?? [],
   );
   const [languages, setLanguages] = useState<Lang[]>(user?.languages ?? []);
   const [studyMethod, setStudyMethod] = useState<StudyMethod | undefined>(user?.studyMethod);
-  const [studyStruggle, setStudyStruggle] = useState<StudyStruggle | undefined>(user?.studyStruggle);
+  const [studyStruggle, setStudyStruggle] = useState<StudyStruggle | undefined>(
+    user?.studyStruggle,
+  );
   const [preferredInputMode, setPreferredInputMode] = useState<InputMode | undefined>(
     user?.preferredInputMode,
   );
 
-  const goNext = () => {
-    setDirection("forward");
-    setStep((s) => Math.min(TOTAL, s + 1));
-  };
   const goBack = () => {
     setDirection("back");
     setStep((s) => Math.max(1, s - 1));
   };
 
   const finish = () => {
-    if (!board || !classNum || languages.length === 0 || !studyMethod || !studyStruggle || !preferredInputMode) return;
+    if (
+      !board ||
+      !classNum ||
+      languages.length === 0 ||
+      !studyMethod ||
+      !studyStruggle ||
+      !preferredInputMode
+    )
+      return;
     updateUser({
+      name: name.trim() || undefined,
       board,
       classNum,
       languages,
@@ -82,41 +92,26 @@ export default function Onboarding() {
     }
   };
 
-  const handleSecondary = () => navigate("/subjects", { replace: true });
-
-  // Step 1: auto-advance after coaching chip selected
-  const onSelectCoaching = (v: boolean) => {
-    setAttendsCoaching(v);
-    setTimeout(() => {
-      setDirection("forward");
-      setStep(2);
-    }, 220);
-  };
-
-  // Step 4: auto-advance on study method selection
-  const onSelectStudyMethod = (m: StudyMethod) => {
-    setStudyMethod(m);
-    setTimeout(() => {
-      setDirection("forward");
-      setStep(5);
-    }, 220);
-  };
-
-  // Step 5: auto-advance after input mode chip
-  const onSelectInputMode = (m: InputMode) => {
-    setPreferredInputMode(m);
-    setTimeout(() => {
+  // Single source of truth for the Next button — every step has one.
+  const handleNext = () => {
+    if (step === 5) {
       finish();
-    }, 220);
+      return;
+    }
+    setDirection("forward");
+    setStep((s) => Math.min(TOTAL, s + 1));
   };
 
-  // Disable rules for the explicit Next button
+  // Per-step validation for Next button.
   const nextDisabled =
+    (step === 1 && (!board || attendsCoaching === undefined)) ||
     (step === 2 && !classNum) ||
-    (step === 3 && languages.length === 0);
+    (step === 3 && languages.length === 0) ||
+    (step === 4 && !studyMethod) ||
+    (step === 5 && (!studyStruggle || !preferredInputMode));
 
   const showBackArrow = step >= 2 && step <= 5;
-  const showNextButton = step === 2 || step === 3;
+  const showNextButton = step >= 1 && step <= 5;
 
   return (
     <main className="min-h-screen bg-background">
@@ -145,10 +140,12 @@ export default function Onboarding() {
           <StepFrame stepKey={step} direction={direction}>
             {step === 1 && (
               <BoardStep
+                name={name}
                 value={board}
                 attendsCoaching={attendsCoaching}
+                onChangeName={setName}
                 onSelectBoard={setBoard}
-                onSelectCoaching={onSelectCoaching}
+                onSelectCoaching={setAttendsCoaching}
               />
             )}
             {step === 2 && (
@@ -161,13 +158,15 @@ export default function Onboarding() {
               />
             )}
             {step === 3 && <LanguageStep value={languages} onChange={setLanguages} />}
-            {step === 4 && <StudyMethodStep value={studyMethod} onSelect={onSelectStudyMethod} />}
+            {step === 4 && (
+              <StudyMethodStep value={studyMethod} onSelect={setStudyMethod} />
+            )}
             {step === 5 && (
               <StruggleStep
                 value={studyStruggle}
                 inputMode={preferredInputMode}
                 onSelectStruggle={setStudyStruggle}
-                onSelectInput={onSelectInputMode}
+                onSelectInput={setPreferredInputMode}
               />
             )}
             {step === 6 && board && classNum && (
@@ -176,8 +175,8 @@ export default function Onboarding() {
                 classNum={classNum}
                 languages={languages}
                 struggle={studyStruggle}
+                name={name}
                 onPrimary={handlePrimary}
-                onSecondary={handleSecondary}
               />
             )}
           </StepFrame>
@@ -188,7 +187,7 @@ export default function Onboarding() {
             <Button
               size="lg"
               disabled={nextDisabled}
-              onClick={step === 3 ? () => { setDirection("forward"); setStep(4); } : goNext}
+              onClick={handleNext}
               className={cn(
                 "h-14 w-full rounded-pill text-base font-semibold transition-all",
                 nextDisabled
@@ -196,7 +195,8 @@ export default function Onboarding() {
                   : "bg-primary text-primary-foreground shadow-glow hover:bg-primary/90",
               )}
             >
-              Next <ArrowRight className="ml-1 h-4 w-4" />
+              {step === 5 ? "Finish" : "Next"}
+              <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
         ) : null}

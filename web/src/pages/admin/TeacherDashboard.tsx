@@ -86,31 +86,7 @@ export default function TeacherDashboard() {
       
       <div className="pt-4">
         <h2 className="font-display text-xl font-bold tracking-tight mb-4">Quick Filters</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-           <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => navigate('/admin/teacher/tickets?subject=Mathematics')}>
-             <CardContent className="flex items-center gap-4 p-6">
-               <div className="rounded-xl bg-primary/10 p-3">
-                 <BookOpen className="h-5 w-5 text-primary" />
-               </div>
-               <div>
-                 <p className="font-bold">Mathematics</p>
-                 <p className="text-sm text-muted-foreground">Filter active math doubts</p>
-               </div>
-             </CardContent>
-           </Card>
-
-           <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => navigate('/admin/teacher/tickets?subject=Science')}>
-             <CardContent className="flex items-center gap-4 p-6">
-               <div className="rounded-xl bg-primary/10 p-3">
-                 <Layers className="h-5 w-5 text-primary" />
-               </div>
-               <div>
-                 <p className="font-bold">Science</p>
-                 <p className="text-sm text-muted-foreground">Filter active science queries</p>
-               </div>
-             </CardContent>
-           </Card>
-
+        <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
            <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => navigate('/admin/teacher/tickets?status=open&sort=oldest')}>
              <CardContent className="flex items-center gap-4 p-6">
                <div className="rounded-xl bg-[hsl(var(--warning))]/10 p-3">

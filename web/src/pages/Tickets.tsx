@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Lock, Plus, Sparkles } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
@@ -43,7 +43,7 @@ export default function Tickets() {
 
   const isPro = user?.plan === "pro";
   const quota = getTicketQuota();
-  const used = useMemo(() => (user ? getMonthlyUsage(user.phone) : 0), [user, tickets]);
+  const used = user ? getMonthlyUsage(user.phone) : 0;
   const remaining = Math.max(0, quota - used);
 
   if (!isPro) {

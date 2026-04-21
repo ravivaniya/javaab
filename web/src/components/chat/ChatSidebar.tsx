@@ -1,12 +1,8 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { LogOut, Plus, Settings, Trash2 } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/brand/Logo";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Conversation, bucketOf, DateBucket } from "@/lib/chat";
-import { useAuth } from "@/hooks/useAuth";
+import { Conversation, bucketOf, DateBucket, formatChatTitle } from "@/lib/chat";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -16,15 +12,12 @@ interface Props {
   onNew: () => void;
   onDelete: (id: string) => void;
   onCloseMobile?: () => void;
+  /** When true, render the icon-only collapsed rail (desktop only). */
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const ORDER: DateBucket[] = ["Today", "Yesterday", "This Week", "Earlier"];
-
-const PLAN_BADGE: Record<string, { label: string; cls: string }> = {
-  free: { label: "Free", cls: "bg-muted text-muted-foreground" },
-  plus: { label: "Plus", cls: "bg-[hsl(var(--plus))]/15 text-[hsl(var(--plus))]" },
-  pro: { label: "Pro", cls: "bg-[hsl(var(--pro))]/15 text-[hsl(var(--pro))]" },
-};
 
 export function ChatSidebar({
   conversations,
@@ -33,10 +26,9 @@ export function ChatSidebar({
   onNew,
   onDelete,
   onCloseMobile,
+  collapsed = false,
+  onToggleCollapse,
 }: Props) {
-  const { user, logout } = useAuth();
-  const nav = useNavigate();
-
   const grouped = useMemo(() => {
     const out: Record<DateBucket, Conversation[]> = {
       Today: [],
@@ -48,14 +40,50 @@ export function ChatSidebar({
     return out;
   }, [conversations]);
 
-  const badge = PLAN_BADGE[user?.plan ?? "free"];
-  const initials = user?.phone?.slice(-2) ?? "JV";
+  if (collapsed) {
+    return (
+      <aside className="flex h-full w-full flex-col items-center bg-sidebar py-3 text-sidebar-foreground">
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label="Expand sidebar"
+          onClick={onToggleCollapse}
+          className="mb-2 h-9 w-9"
+        >
+          <ChevronsRight className="h-4 w-4" />
+        </Button>
+        <Button
+          size="icon"
+          aria-label="New chat"
+          onClick={() => {
+            onNew();
+            onCloseMobile?.();
+          }}
+          className="h-9 w-9 rounded-full"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </aside>
+    );
+  }
 
   return (
     <aside className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-sidebar-border p-4">
-        <Logo />
+      <div className="flex items-center justify-between gap-2 border-b border-sidebar-border p-3">
+        <span className="px-1 font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          Chats
+        </span>
+        {onToggleCollapse && (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Collapse sidebar"
+            onClick={onToggleCollapse}
+            className="hidden h-8 w-8 md:inline-flex"
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       <div className="p-3">
@@ -71,7 +99,6 @@ export function ChatSidebar({
         </Button>
       </div>
 
-      {/* History */}
       <ScrollArea className="flex-1 px-2">
         <div className="space-y-4 pb-4">
           {ORDER.map((bucket) => {
@@ -86,51 +113,45 @@ export function ChatSidebar({
                   {items.map((c) => {
                     const isActive = c.id === activeId;
                     return (
-                      <li key={c.id}>
+                      <li key={c.id} className="group relative">
                         <button
                           onClick={() => {
                             onSelect(c.id);
                             onCloseMobile?.();
                           }}
                           className={cn(
-                            "group relative flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors",
+                            "flex w-full items-start gap-2 rounded-xl px-3 py-2 pr-10 text-left text-sm transition-colors",
                             "hover:bg-sidebar-accent",
                             isActive &&
                               "bg-sidebar-accent border-l-[3px] border-primary pl-[9px]",
                           )}
                         >
                           <div className="min-w-0 flex-1">
-                            <p className="truncate font-medium text-sidebar-foreground">
-                              {c.title}
+                            <p
+                              className="truncate font-medium text-sidebar-foreground"
+                              title={c.title}
+                            >
+                              {formatChatTitle(c.title)}
                             </p>
-                            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                              {c.subject && (
-                                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium">
-                                  {c.subject}
-                                </span>
-                              )}
-                              <span>{relTime(c.updatedAt)}</span>
-                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {relTime(c.updatedAt)}
+                            </span>
                           </div>
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDelete(c.id);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.stopPropagation();
-                                onDelete(c.id);
-                              }
-                            }}
-                            className="invisible mt-0.5 rounded-md p-1 text-muted-foreground hover:bg-background hover:text-destructive group-hover:visible"
-                            aria-label="Delete chat"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </span>
                         </button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(c.id);
+                          }}
+                          className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:bg-background hover:text-destructive focus-visible:text-destructive md:opacity-80 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                          aria-label="Delete chat"
+                          title="Delete chat"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </li>
                     );
                   })}
@@ -146,54 +167,13 @@ export function ChatSidebar({
           )}
         </div>
       </ScrollArea>
-
-      {/* Footer */}
-      <div className="border-t border-sidebar-border p-3">
-        <div className="flex items-center gap-3 rounded-2xl px-2 py-2">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">+91 {user?.phone}</p>
-            <span
-              className={cn(
-                "inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
-                badge.cls,
-              )}
-            >
-              {badge.label}
-            </span>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => nav("/settings/subscription")}
-            aria-label="Settings"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={logout}
-            aria-label="Log out"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
     </aside>
   );
 }
 
 function relTime(ts: number): string {
   const d = new Date(ts);
-  const now = Date.now();
-  const diff = now - ts;
+  const diff = Date.now() - ts;
   const min = Math.floor(diff / 60000);
   if (min < 1) return "just now";
   if (min < 60) return `${min}m ago`;

@@ -7,7 +7,7 @@ class ChatRequest(BaseModel):
     image_base64: Optional[str] = None
     class_level: int
     board: str
-    subject: str
+    subject: Optional[str] = ""
     language: str = "en"
 
 class FeedbackRequest(BaseModel):
@@ -44,7 +44,7 @@ class TicketCreateRequest(BaseModel):
     image_base64: Optional[str] = None
     board: str
     class_level: int
-    subject: str
+    subject: Optional[str] = ""
     ai_attempts: List[str] = []
 
 class TicketResponseRequest(BaseModel):

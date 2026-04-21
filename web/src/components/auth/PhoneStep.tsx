@@ -90,11 +90,19 @@ export function PhoneStep({ onSubmit }: PhoneStepProps) {
 
       <p className="text-center text-xs text-muted-foreground">
         By continuing you agree to our{" "}
-        <a href="#" className="font-medium text-foreground underline-offset-4 hover:underline">
+        <a
+          href="https://tryjavaab.com/terms"
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+          target="_blank"
+        >
           Terms
         </a>{" "}
         &{" "}
-        <a href="#" className="font-medium text-foreground underline-offset-4 hover:underline">
+        <a
+          href="https://tryjavaab.com/privacy"
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+          target="_blank"
+        >
           Privacy Policy
         </a>
         .

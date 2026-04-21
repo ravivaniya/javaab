@@ -2,9 +2,15 @@ import { useState, useEffect, useRef } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { RateLimitCard } from "./RateLimitCard";
 import { ApiService } from "@/services/api";
-import { ChatMessage, Confidence } from "@/lib/chat";
+import type { ChatMessage, Confidence } from "@/lib/chat";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+
+type StreamSource = {
+  title?: string;
+  book?: string;
+  chapter?: string;
+};
 
 export interface ChatStreamRequest {
   query: string;
@@ -58,7 +64,7 @@ export function ChatStream({
         onChunk: (chunk) => {
           setContent((prev) => prev + chunk);
         },
-        onMetadata: (mod, conf) => {
+        onMetadata: (_model, conf) => {
           const c = conf?.toLowerCase() as Confidence;
           if (["verified", "ai", "low"].includes(c)) {
             setConfidence(c);
@@ -66,7 +72,7 @@ export function ChatStream({
         },
         onSources: (sources) => {
           if (sources && sources.length > 0) {
-            const first = sources[0] as any;
+            const first = sources[0] as StreamSource;
             setSource({
               book: first.title || first.book || "Textbook",
               chapter: first.chapter || "",
@@ -76,9 +82,10 @@ export function ChatStream({
         onDone: () => {
           setIsDone(true);
         },
-        onError: (e: any) => {
-          setErr(e);
-          if (onError) onError(e);
+        onError: (e: unknown) => {
+          const error = e instanceof Error ? e : new Error("A network error occurred.");
+          setErr(error);
+          if (onError) onError(error);
         },
       }
     );

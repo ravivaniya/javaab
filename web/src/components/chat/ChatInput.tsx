@@ -1,4 +1,5 @@
-import { useRef, useState, KeyboardEvent } from "react";
+import { useRef, useState, KeyboardEvent, ClipboardEvent } from "react";
+import { toast } from "@/hooks/use-toast";
 import { Camera, ImagePlus, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UpgradeModal } from "./UpgradeModal";
@@ -47,7 +48,7 @@ export function ChatInput({ onSend, disabled, isPaid, placeholder }: Props) {
     if (!file) return;
     const url = URL.createObjectURL(file);
     setImageUrl(url);
-    
+
     try {
       const { ApiService } = await import("@/services/api");
       const base64 = await ApiService.compressImageToBase64(file);
@@ -55,8 +56,39 @@ export function ChatInput({ onSend, disabled, isPaid, placeholder }: Props) {
     } catch (err) {
       console.error("Failed to compress image", err);
     }
-    
+
     e.target.value = "";
+  };
+
+  const onPaste = async (e: ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        if (!isPaid) {
+          e.preventDefault();
+          setUpgradeOpen(true);
+          return;
+        }
+        const file = item.getAsFile();
+        if (!file) continue;
+        e.preventDefault();
+        const url = URL.createObjectURL(file);
+        setImageUrl(url);
+        try {
+          const { ApiService } = await import("@/services/api");
+          const base64 = await ApiService.compressImageToBase64(file);
+          setImageBase64(base64);
+        } catch (err) {
+          console.error("Failed to compress pasted image", err);
+        }
+        toast({
+          title: "Image pasted",
+          description: "Ready to send with your message.",
+        });
+        return;
+      }
+    }
   };
 
   return (
@@ -117,6 +149,7 @@ export function ChatInput({ onSend, disabled, isPaid, placeholder }: Props) {
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={onKey}
+              onPaste={onPaste}
               rows={1}
               placeholder={placeholder ?? "पूछो कुछ भी... Ask anything..."}
               disabled={disabled}
