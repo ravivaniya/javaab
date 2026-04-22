@@ -80,7 +80,7 @@ export function MessageBubble({ message }: Props) {
                 )}
               >
                 <meta.Icon className="h-3.5 w-3.5" />
-                {meta.label}
+                {meta.label} {message.modelName && <span className="font-normal opacity-80 ml-0.5">({message.modelName})</span>}
               </span>
 
               <div className="ml-auto flex items-center gap-1">

@@ -13,15 +13,7 @@ from azure.search.documents.models import VectorizedQuery
 
 logger = logging.getLogger(__name__)
 
-def cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
-    if not vec1 or not vec2:
-        return 0.0
-    dot = sum(a * b for a, b in zip(vec1, vec2))
-    norm_a = math.sqrt(sum(a * a for a in vec1))
-    norm_b = math.sqrt(sum(b * b for b in vec2))
-    if norm_a == 0 or norm_b == 0:
-        return 0.0
-    return dot / (norm_a * norm_b)
+
 
 class CachedAnswer(BaseModel):
     cache_id: str
@@ -113,7 +105,7 @@ class CacheService:
             vector_query = VectorizedQuery(
                 vector=query_vector,
                 k_nearest_neighbors=1,
-                fields="question_embedding"
+                fields="question_vector"
             )
             
             # HNSW search in verified_answers index
@@ -121,7 +113,7 @@ class CacheService:
                 search_text=None,
                 vector_queries=[vector_query],
                 filter=filter_str,
-                select=["cache_id", "question_embedding"],
+                select=["cache_id"],
                 top=1
             )
             
@@ -131,8 +123,7 @@ class CacheService:
                 break
                 
             if best_match:
-                doc_vector = best_match.get("question_embedding", [])
-                sim = cosine_similarity(query_vector, doc_vector)
+                sim = best_match.get("@search.score", 0.0)
                 
                 if sim >= 0.93:
                     cache_id = best_match.get("cache_id") or best_match.get("id")
@@ -160,7 +151,7 @@ class CacheService:
                 "id": str(answer.cache_id),  # Usually AI search requires string ids
                 "cache_id": str(answer.cache_id),
                 "question": answer.question,
-                "question_embedding": answer.question_embedding,
+                "question_vector": answer.question_embedding,
                 "board": answer.board,
                 "class_level": answer.class_level,
                 "subject": answer.subject,

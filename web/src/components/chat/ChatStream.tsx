@@ -41,6 +41,7 @@ export function ChatStream({
   const [content, setContent] = useState("");
   const [err, setErr] = useState<Error | null>(null);
   const [confidence, setConfidence] = useState<Confidence | undefined>();
+  const [modelName, setModelName] = useState<string | undefined>();
   const [source, setSource] = useState<{ book: string; chapter: string } | undefined>();
   const [isDone, setIsDone] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -64,7 +65,8 @@ export function ChatStream({
         onChunk: (chunk) => {
           setContent((prev) => prev + chunk);
         },
-        onMetadata: (_model, conf) => {
+        onMetadata: (model, conf) => {
+          if (model) setModelName(model);
           const c = conf?.toLowerCase() as Confidence;
           if (["verified", "ai", "low"].includes(c)) {
             setConfidence(c);
@@ -105,6 +107,7 @@ export function ChatStream({
         createdAt: Date.now(),
         confidence,
         source,
+        modelName,
       });
     }
   }, [isDone, err, onComplete, content, confidence, source]);
@@ -140,6 +143,7 @@ export function ChatStream({
     createdAt: Date.now(),
     confidence,
     source,
+    modelName,
   };
 
   return (
