@@ -1,4 +1,4 @@
-name: Backend CI
+name: Backend CI/CD
 
 on:
   push:
@@ -10,21 +10,81 @@ on:
     paths:
       - 'backend/**'
 
+env:
+  ACR_NAME: javaabregistry            # Your Azure Container Registry name
+  IMAGE_NAME: javaab-api
+  RESOURCE_GROUP: javaab-rg
+  CONTAINER_APP_NAME: javaab-api
+
 jobs:
-  build-and-test:
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-    - name: Install dependencies
-      run: |
-        cd backend
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    - name: Run tests
-      run: |
-        cd backend
-        pytest
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          cd backend
+          pytest
+
+  build-and-deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    needs: test                        # Only deploy if tests pass
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # PR builds run tests only — deploy only on push to main
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Log in to Azure using a Service Principal stored in GitHub Secrets
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Log in to your Azure Container Registry
+      - name: Log in to ACR
+        run: |
+          az acr login --name ${{ env.ACR_NAME }}
+
+      # Build and push the Docker image
+      # Tags image with both the commit SHA (for traceability) and 'latest'
+      - name: Build & Push Docker Image
+        run: |
+          IMAGE_TAG=${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}
+          docker build -t $IMAGE_TAG:${{ github.sha }} -t $IMAGE_TAG:latest ./backend
+          docker push $IMAGE_TAG:${{ github.sha }}
+          docker push $IMAGE_TAG:latest
+
+      # Update the Container App to use the newly pushed image
+      - name: Deploy to Azure Container Apps
+        run: |
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # Verify the deployment came up healthy before marking the run green
+      - name: Health Check
+        run: |
+          echo "Waiting 30s for Container App to stabilize..."
+          sleep 30
+          HEALTH_URL="https://$(az containerapp show \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query properties.configuration.ingress.fqdn -o tsv)/health"
+          echo "Checking: $HEALTH_URL"
+          curl --fail --retry 5 --retry-delay 10 "$HEALTH_URL"

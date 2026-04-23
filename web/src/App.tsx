@@ -33,7 +33,6 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
 
-          {/* Onboarding requires auth but NOT completed onboarding */}
           <Route
             path="/onboarding"
             element={
