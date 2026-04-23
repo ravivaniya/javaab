@@ -23,7 +23,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:8080",
         "http://127.0.0.1:8080",
-        "https://app.tryjavaab.com"
+        "https://app.tryjavaab.com",
+        "https://polite-sand-0e7a7af10.7.azurestaticapps.net"
     ],
     allow_credentials=True,
     allow_methods=["*"],
