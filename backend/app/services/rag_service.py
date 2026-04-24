@@ -181,7 +181,7 @@ class RagService:
                     results.extend(en_results)
 
             if not results:
-                return {"context": "", "confidence": "NONE"}
+                return {"context": "", "confidence": "NONE", "confidence_score": 0.0}
 
             # Step 3: Deduplicate, keep best score per chunk
             unique_chunks: Dict[str, dict] = {}
@@ -201,7 +201,7 @@ class RagService:
             )[:5]
 
             if not top_5:
-                return {"context": "", "confidence": "NONE"}
+                return {"context": "", "confidence": "NONE", "confidence_score": 0.0}
 
             # Step 5: Confidence scoring
             avg_score = sum(self._get_score(c) for c in top_5) / len(top_5)
@@ -234,11 +234,11 @@ class RagService:
             if len(final_context) > max_chars:
                 final_context = final_context[:max_chars] + "\n... [truncated for token limits]"
 
-            return {"context": final_context, "confidence": confidence}
+            return {"context": final_context, "confidence": confidence, "confidence_score": round(avg_score, 4)}
 
         except Exception as e:
             logger.error(f"RAG formulation process failed: {e}")
-            return {"context": "", "confidence": "NONE"}
+            return {"context": "", "confidence": "NONE", "confidence_score": 0.0}
 
 
 # ---------------------------------------------------------------------------

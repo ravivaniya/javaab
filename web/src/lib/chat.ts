@@ -19,6 +19,7 @@ export interface ChatMessage {
   // Edit tracking (one-time edit allowed per user message)
   is_edited?: boolean;
   original_text?: string;
+  bookmarked?: boolean; // assistant only — user saved this answer for quick reference
 }
 
 export interface Conversation {
@@ -28,6 +29,7 @@ export interface Conversation {
   createdAt: number;
   updatedAt: number;
   messages: ChatMessage[];
+  saved?: boolean; // true when any message in this conversation is bookmarked
 }
 
 const PREFIX = "javaab.chat.";
@@ -158,6 +160,22 @@ export function markMessageEdited(
   msg.is_edited = true;
   conv.updatedAt = Date.now();
   persist(phone, list);
+}
+
+/**
+ * Toggle bookmark on an assistant message. Marks the conversation as saved
+ * when any message is bookmarked, clears it when none remain.
+ */
+export function bookmarkMessage(phone: string, convId: string, messageId: string): boolean {
+  const list = loadConversations(phone);
+  const conv = list.find((c) => c.id === convId);
+  if (!conv) return false;
+  const msg = conv.messages.find((m) => m.id === messageId);
+  if (!msg) return false;
+  msg.bookmarked = !msg.bookmarked;
+  conv.saved = conv.messages.some((m) => m.bookmarked);
+  persist(phone, list);
+  return msg.bookmarked;
 }
 
 /** Quota helpers — counts user-side messages this calendar month. */

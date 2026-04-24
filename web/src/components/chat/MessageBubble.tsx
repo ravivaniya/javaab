@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
+  Bookmark,
+  BookmarkCheck,
   BookOpen,
   Check,
   ChevronDown,
@@ -8,8 +10,6 @@ import {
   Pencil,
   Sparkles,
   ShieldCheck,
-  ThumbsDown,
-  ThumbsUp,
   X,
 } from "lucide-react";
 import { ChatMessage } from "@/lib/chat";
@@ -17,12 +17,17 @@ import { Markdown } from "./Markdown";
 import { TypingDots } from "./TypingDots";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ApiService } from "@/services/api";
 
 interface Props {
   message: ChatMessage;
   /** Called when the user submits an edit (branch-from-here). */
-  onEdit?: (messageId: string, newContent: string, originalContent: string) => void;
+  onEdit?: (
+    messageId: string,
+    newContent: string,
+    originalContent: string,
+  ) => void;
+  /** Called when the user bookmarks an assistant message. */
+  onBookmark?: (messageId: string) => void;
 }
 
 const CONFIDENCE_META = {
@@ -43,14 +48,6 @@ const CONFIDENCE_META = {
   },
 } as const;
 
-const DISLIKE_REASONS = [
-  "Wrong answer",
-  "Incomplete",
-  "Confusing",
-  "Wrong language",
-  "Other",
-];
-
 /** Collapse AI responses taller than this px threshold. */
 const COLLAPSE_THRESHOLD = 420;
 
@@ -58,7 +55,13 @@ const COLLAPSE_THRESHOLD = 420;
 // User message bubble
 // ─────────────────────────────────────────────────────────────────────────────
 
-function UserBubble({ message, onEdit }: { message: ChatMessage; onEdit?: Props["onEdit"] }) {
+function UserBubble({
+  message,
+  onEdit,
+}: {
+  message: ChatMessage;
+  onEdit?: Props["onEdit"];
+}) {
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(message.content);
@@ -84,7 +87,10 @@ function UserBubble({ message, onEdit }: { message: ChatMessage; onEdit?: Props[
 
   function handleEditSubmit() {
     const trimmed = editValue.trim();
-    if (!trimmed || trimmed === message.content) { setIsEditing(false); return; }
+    if (!trimmed || trimmed === message.content) {
+      setIsEditing(false);
+      return;
+    }
     onEdit?.(message.id, trimmed, message.content);
     setIsEditing(false);
   }
@@ -112,26 +118,48 @@ function UserBubble({ message, onEdit }: { message: ChatMessage; onEdit?: Props[
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleEditSubmit(); }
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleEditSubmit();
+                  }
                   if (e.key === "Escape") setIsEditing(false);
                 }}
                 className="w-full resize-none rounded-lg bg-background/60 p-2 text-[15px] leading-relaxed outline-none ring-1 ring-primary/30 focus:ring-primary min-h-[60px]"
                 rows={3}
               />
               <div className="flex gap-2">
-                <Button size="sm" className="rounded-pill" onClick={handleEditSubmit}>Send</Button>
-                <Button size="sm" variant="ghost" className="rounded-pill" onClick={() => setIsEditing(false)}>Cancel</Button>
+                <Button
+                  size="sm"
+                  className="rounded-pill"
+                  onClick={handleEditSubmit}
+                >
+                  Send
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="rounded-pill"
+                  onClick={() => setIsEditing(false)}
+                >
+                  Cancel
+                </Button>
               </div>
             </div>
           ) : (
-            <p className="whitespace-pre-wrap leading-relaxed text-[15px] break-words">{message.content}</p>
+            <p className="whitespace-pre-wrap leading-relaxed text-[15px] break-words">
+              {message.content}
+            </p>
           )}
 
           {message.is_edited && (
             <div className="relative inline-block">
               <span
                 className="mt-1 inline-block cursor-help text-[11px] text-muted-foreground underline decoration-dotted"
-                title={message.original_text ? `Original: ${message.original_text}` : "Message was edited"}
+                title={
+                  message.original_text
+                    ? `Original: ${message.original_text}`
+                    : "Message was edited"
+                }
               >
                 (edited)
               </span>
@@ -149,7 +177,11 @@ function UserBubble({ message, onEdit }: { message: ChatMessage; onEdit?: Props[
               onClick={handleCopy}
               title="Copy message"
             >
-              {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? (
+                <Check className="h-3.5 w-3.5 text-emerald-500" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
             </Button>
             <Button
               variant="ghost"
@@ -198,10 +230,15 @@ function UserBubble({ message, onEdit }: { message: ChatMessage; onEdit?: Props[
 // Assistant message bubble
 // ─────────────────────────────────────────────────────────────────────────────
 
-function AssistantBubble({ message }: { message: ChatMessage }) {
+function AssistantBubble({
+  message,
+  onBookmark,
+}: {
+  message: ChatMessage;
+  onBookmark?: Props["onBookmark"];
+}) {
   const [showSource, setShowSource] = useState(false);
-  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
-  const [showDislikeReasons, setShowDislikeReasons] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(message.bookmarked ?? false);
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [needsCollapse, setNeedsCollapse] = useState(false);
@@ -209,6 +246,11 @@ function AssistantBubble({ message }: { message: ChatMessage }) {
 
   const meta = CONFIDENCE_META[message.confidence ?? "ai"];
   const hasContent = message.content.trim().length > 0;
+
+  // Sync bookmark state if parent updates message prop (e.g. cross-tab)
+  useEffect(() => {
+    setIsBookmarked(message.bookmarked ?? false);
+  }, [message.bookmarked]);
 
   // Measure rendered height to decide whether to collapse
   useEffect(() => {
@@ -227,62 +269,15 @@ function AssistantBubble({ message }: { message: ChatMessage }) {
     });
   }
 
-  async function handleFeedback(isPositive: boolean) {
-    if (feedback !== null) return; // already voted
-    if (!isPositive) {
-      setFeedback("down");
-      setShowDislikeReasons(true);
-    } else {
-      setFeedback("up");
-      await ApiService.sendFeedback(
-        message.id,
-        true,
-        undefined,
-        message.confidence === "verified",
-        message.confidence === "verified" ? "HIGH" : "AI",
-      ).catch(console.error);
-    }
-  }
-
-  async function handleDislikeReason(reason: string) {
-    setShowDislikeReasons(false);
-    await ApiService.sendFeedback(
-      message.id,
-      false,
-      reason,
-      message.confidence === "verified",
-    ).catch(console.error);
+  function handleBookmark() {
+    const next = !isBookmarked;
+    setIsBookmarked(next);
+    onBookmark?.(message.id);
   }
 
   return (
     <div className="flex w-full justify-start">
       <div className="group relative max-w-[92%] space-y-3 rounded-3xl rounded-tl-md bg-card px-5 py-4 shadow-sm ring-1 ring-border/50 sm:max-w-[80%] break-words overflow-wrap-anywhere">
-
-        {/* Copy button — top right, revealed on hover */}
-        {hasContent && (
-          <button
-            onClick={handleCopy}
-            title="Copy answer"
-            className="absolute right-3 top-3 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted hover:text-foreground sm:flex hidden"
-          >
-            {copied
-              ? <Check className="h-3.5 w-3.5 text-emerald-500" />
-              : <Copy className="h-3.5 w-3.5" />}
-          </button>
-        )}
-        {/* Always visible copy on mobile */}
-        {hasContent && (
-          <button
-            onClick={handleCopy}
-            title="Copy answer"
-            className="absolute right-3 top-3 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground sm:hidden"
-          >
-            {copied
-              ? <Check className="h-3.5 w-3.5 text-emerald-500" />
-              : <Copy className="h-3.5 w-3.5" />}
-          </button>
-        )}
-
         {!hasContent ? (
           <TypingDots />
         ) : (
@@ -312,14 +307,18 @@ function AssistantBubble({ message }: { message: ChatMessage }) {
                 className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
               >
                 {isExpanded ? (
-                  <><ChevronDown className="h-4 w-4 rotate-180" /> Show less ↑</>
+                  <>
+                    <ChevronDown className="h-4 w-4 rotate-180" /> Show less ↑
+                  </>
                 ) : (
-                  <><ChevronDown className="h-4 w-4" /> Show more ↓</>
+                  <>
+                    <ChevronDown className="h-4 w-4" /> Show more ↓
+                  </>
                 )}
               </button>
             )}
 
-            {/* Source + confidence + feedback row */}
+            {/* Source + confidence + bookmark + copy row */}
             <div className="flex flex-wrap items-center gap-2 pt-1">
               {message.source && (
                 <button
@@ -328,16 +327,23 @@ function AssistantBubble({ message }: { message: ChatMessage }) {
                 >
                   <BookOpen className="h-3.5 w-3.5" />
                   Source
-                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showSource && "rotate-180")} />
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 transition-transform",
+                      showSource && "rotate-180",
+                    )}
+                  />
                 </button>
               )}
 
-              <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold", meta.className)}>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
+                  meta.className,
+                )}
+              >
                 <meta.Icon className="h-3.5 w-3.5" />
                 {meta.label}
-                {message.modelName && (
-                  <span className="font-normal opacity-80 ml-0.5">({message.modelName})</span>
-                )}
               </span>
 
               <div className="ml-auto flex items-center gap-1">
@@ -346,57 +352,48 @@ function AssistantBubble({ message }: { message: ChatMessage }) {
                   size="icon"
                   className={cn(
                     "h-7 w-7 transition-all",
-                    feedback === "up" && "text-primary scale-110",
-                    feedback !== null && "pointer-events-none",
+                    isBookmarked && "text-primary scale-110",
                   )}
-                  onClick={() => handleFeedback(true)}
-                  aria-label="Helpful"
-                  disabled={feedback !== null}
+                  onClick={handleBookmark}
+                  aria-label={
+                    isBookmarked
+                      ? "Remove bookmark"
+                      : "Save for quick reference"
+                  }
+                  title={
+                    isBookmarked
+                      ? "Remove bookmark"
+                      : "Save for quick reference"
+                  }
                 >
-                  <ThumbsUp className="h-3.5 w-3.5" />
+                  {isBookmarked ? (
+                    <BookmarkCheck className="h-3.5 w-3.5" />
+                  ) : (
+                    <Bookmark className="h-3.5 w-3.5" />
+                  )}
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={cn(
-                    "h-7 w-7",
-                    feedback === "down" && "text-destructive",
-                    feedback !== null && feedback !== "down" && "pointer-events-none",
-                  )}
-                  onClick={() => handleFeedback(false)}
-                  aria-label="Not helpful"
-                  disabled={feedback !== null}
+                  className="h-7 w-7"
+                  onClick={handleCopy}
+                  aria-label="Copy answer"
+                  title="Copy answer"
                 >
-                  <ThumbsDown className="h-3.5 w-3.5" />
+                  {copied ? (
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
                 </Button>
               </div>
             </div>
 
-            {/* Dislike reason picker */}
-            {showDislikeReasons && (
-              <div className="animate-fade-in flex flex-wrap gap-2 border-t border-border pt-3">
-                <p className="w-full text-xs text-muted-foreground">What was wrong? (optional)</p>
-                {DISLIKE_REASONS.map((reason) => (
-                  <button
-                    key={reason}
-                    onClick={() => handleDislikeReason(reason)}
-                    className="rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-foreground hover:border-primary hover:bg-primary/10 transition-colors"
-                  >
-                    {reason}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setShowDislikeReasons(false)}
-                  className="ml-auto rounded-full px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            )}
-
             {showSource && message.source && (
               <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground animate-fade-in">
-                <p className="font-semibold text-foreground">{message.source.book}</p>
+                <p className="font-semibold text-foreground">
+                  {message.source.book}
+                </p>
                 <p>{message.source.chapter}</p>
               </div>
             )}
@@ -411,9 +408,9 @@ function AssistantBubble({ message }: { message: ChatMessage }) {
 // Export
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function MessageBubble({ message, onEdit }: Props) {
+export function MessageBubble({ message, onEdit, onBookmark }: Props) {
   if (message.role === "user") {
     return <UserBubble message={message} onEdit={onEdit} />;
   }
-  return <AssistantBubble message={message} />;
+  return <AssistantBubble message={message} onBookmark={onBookmark} />;
 }

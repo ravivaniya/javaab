@@ -41,7 +41,7 @@ async function consumeSseStream(
   callbacks: {
     onChunk?: (content: string) => void;
     onConversationId?: (id: string) => void;
-    onMetadata?: (model: string, confidence: string, fromCache: boolean, conversationId?: string) => void;
+    onMetadata?: (model: string, confidence: string, fromCache: boolean, conversationId?: string, confidenceScore?: number) => void;
     onSources?: (sources: Record<string, unknown>[]) => void;
     onDone?: () => void;
     onError?: (err: unknown) => void;
@@ -76,7 +76,7 @@ async function consumeSseStream(
             } else if (data.type === "conversation_id") {
               callbacks.onConversationId?.(data.id);
             } else if (data.type === "metadata") {
-              callbacks.onMetadata?.(data.model, data.confidence, data.from_cache ?? false, data.conversation_id);
+              callbacks.onMetadata?.(data.model, data.confidence, data.from_cache ?? false, data.conversation_id, data.confidence_score);
             } else if (data.type === "sources") {
               callbacks.onSources?.(data.sources);
             } else if (data.type === "done") {
@@ -127,7 +127,7 @@ export const ApiService = {
     callbacks: {
       onChunk: (content: string) => void;
       onConversationId?: (id: string) => void;
-      onMetadata: (model: string, confidence: string, fromCache?: boolean, conversationId?: string) => void;
+      onMetadata: (model: string, confidence: string, fromCache?: boolean, conversationId?: string, confidenceScore?: number) => void;
       onSources: (sources: Record<string, unknown>[]) => void;
       onDone: () => void;
       onError: (err: unknown) => void;
@@ -191,23 +191,16 @@ export const ApiService = {
     }
   },
 
-  // ── Chat: feedback ────────────────────────────────────────────────────────
+  // ── Chat: bookmark message ────────────────────────────────────────────────
 
-  async sendFeedback(
-    messageId: string,
-    isPositive: boolean,
-    dislikeReason?: string,
-    fromCache?: boolean,
-    confidence?: string,
-  ) {
-    return fetchApi("/chat/feedback", {
+  async bookmarkMessage(messageId: string, conversationId: string, userId: string, content?: string) {
+    return fetchApi("/chat/bookmark", {
       method: "POST",
       body: JSON.stringify({
         message_id: messageId,
-        is_positive: isPositive,
-        dislike_reason: dislikeReason ?? null,
-        from_cache: fromCache ?? false,
-        confidence: confidence ?? null,
+        conversation_id: conversationId,
+        user_id: userId,
+        content: content ?? null,
       }),
     });
   },

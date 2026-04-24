@@ -12,13 +12,11 @@ class ChatRequest(BaseModel):
     conversation_id: Optional[str] = None
     retry_of: Optional[str] = None
 
-class FeedbackRequest(BaseModel):
+class BookmarkRequest(BaseModel):
     message_id: str
-    is_positive: bool
-    reason: Optional[str] = None
-    dislike_reason: Optional[str] = None
-    from_cache: Optional[bool] = False
-    confidence: Optional[str] = None
+    conversation_id: str
+    user_id: str
+    content: Optional[str] = None
 
 class ChatResponse(BaseModel):
     reply: str

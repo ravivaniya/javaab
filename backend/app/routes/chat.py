@@ -11,7 +11,7 @@ from fastapi.responses import StreamingResponse
 from app.config import get_settings
 from app.models.schemas import (
     ChatRequest,
-    FeedbackRequest,
+    BookmarkRequest,
     TitleUpdateRequest,
     MessageEditRequest,
     DebugRoutingRequest,
@@ -84,7 +84,11 @@ async def perform_background_logging(
     await cosmos_repo.save_conversation(message_doc)
 
     if meta.get("confidence") == "LOW":
-        logger.warning(f"Flagging Low Confidence Answer for Review. msg_id={message_id}")
+        score = meta.get("confidence_score", 0.0)
+        logger.warning(
+            f"[low-confidence] chat_id={conversation_id} msg_id={message_id} "
+            f"confidence=LOW score={score:.4f}"
+        )
         await cosmos_repo.save_feedback(
             {"message_id": message_id, "is_positive": False, "reason": "SYSTEM_FLAG_LOW_CONFIDENCE"}
         )
@@ -131,6 +135,7 @@ async def ask_pipeline_generator(
 
     context_str = ""
     confidence = "NONE"
+    confidence_score = 0.0
 
     if not cached_ans:
         # ── 4. RAG retrieval ───────────────────────────────────────────────
@@ -142,6 +147,7 @@ async def ask_pipeline_generator(
         rag_data = await rag_service.get_context(query, filters, request.language)
         context_str = rag_data.get("context", "")
         confidence = rag_data.get("confidence", "NONE")
+        confidence_score = rag_data.get("confidence_score", 0.0)
 
     # ── 5. Conversation history ────────────────────────────────────────────
     conversation_history = []
@@ -175,8 +181,16 @@ async def ask_pipeline_generator(
                 meta_json_str = chunk.replace("\\n\\n[METADATA]", "").replace("\n\n[METADATA]", "")
                 meta = json.loads(meta_json_str)
                 meta["conversation_id"] = conversation_id
+                meta.setdefault("confidence_score", confidence_score)
 
-                yield f"data: {json.dumps({'type': 'metadata', 'model': meta.get('model_used'), 'confidence': meta.get('confidence'), 'from_cache': meta.get('from_cache', False), 'conversation_id': conversation_id})}\n\n"
+                conf_label = meta.get('confidence', 'NONE')
+                conf_score = meta.get('confidence_score', confidence_score)
+                logger.info(
+                    f"[chat] chat_id={conversation_id} msg_id={message_id} "
+                    f"confidence={conf_label} score={conf_score:.4f} "
+                    f"model={meta.get('model_used')} from_cache={meta.get('from_cache', False)}"
+                )
+                yield f"data: {json.dumps({'type': 'metadata', 'model': meta.get('model_used'), 'confidence': conf_label, 'confidence_score': conf_score, 'from_cache': meta.get('from_cache', False), 'conversation_id': conversation_id})}\n\n"
                 yield f"data: {json.dumps({'type': 'sources', 'sources': meta.get('sources', [])})}\n\n"
 
                 is_retry = bool(request.retry_of)
@@ -276,37 +290,25 @@ async def ask_question(request: ChatRequest, bg_tasks: BackgroundTasks):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# POST /chat/feedback
+# POST /chat/bookmark
 # ─────────────────────────────────────────────────────────────────────────────
 
-@router.post("/feedback")
-async def submit_feedback(request: FeedbackRequest):
+@router.post("/bookmark")
+async def bookmark_message(request: BookmarkRequest):
     """
-    POST /chat/feedback
-    Submit user feedback on a specific response.
+    POST /chat/bookmark
+    Save or unsave an assistant message for quick reference.
     """
-    await cosmos_repo.save_feedback(
+    await cosmos_repo.save_bookmark(
         {
             "message_id": request.message_id,
-            "is_positive": request.is_positive,
-            "reason": request.reason,
-            "dislike_reason": request.dislike_reason,
+            "conversation_id": request.conversation_id,
+            "user_id": request.user_id,
+            "content": request.content,
+            "bookmarked_at": _now_iso(),
         }
     )
-
-    if not request.is_positive:
-        # Flag for teacher review; auto-create task if 3+ dislikes
-        await cosmos_repo.flag_message_for_review(request.message_id)
-        dislike_count = await cosmos_repo.get_message_dislike_count(request.message_id)
-        if dislike_count >= 3:
-            await cosmos_repo.create_auto_review_task(request.message_id)
-            logger.info(f"Auto-review task triggered for message {request.message_id} ({dislike_count} dislikes)")
-    else:
-        # High-confidence, non-cached liked answers go into the cache promotion queue
-        if not request.from_cache and request.confidence == "HIGH":
-            await cosmos_repo.add_to_cache_candidate(request.message_id)
-
-    return {"status": "feedback received securely"}
+    return {"success": True}
 
 
 # ─────────────────────────────────────────────────────────────────────────────

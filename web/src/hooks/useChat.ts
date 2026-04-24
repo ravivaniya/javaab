@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   appendMessage,
+  bookmarkMessage,
   bumpUsage,
   ChatMessage,
   Conversation,
@@ -180,6 +181,24 @@ export function useChat() {
     setIsResponding(false);
   }, []);
 
+  /** Toggle bookmark on an assistant message. Syncs to backend async. */
+  const bookmarkChat = useCallback(
+    (convId: string, messageId: string) => {
+      if (!phone) return;
+      const conv = conversations.find((c) => c.id === convId);
+      const msg = conv?.messages.find((m) => m.id === messageId);
+      bookmarkMessage(phone, convId, messageId);
+      setConversations(loadConversations(phone));
+      ApiService.bookmarkMessage(
+        messageId,
+        convId,
+        phone,
+        msg?.rawAnswer ?? msg?.content,
+      ).catch(console.error);
+    },
+    [phone, conversations],
+  );
+
   return {
     conversations,
     active,
@@ -200,5 +219,6 @@ export function useChat() {
     remaining,
     limitReached,
     sessionWordCount,
+    bookmarkChat,
   };
 }

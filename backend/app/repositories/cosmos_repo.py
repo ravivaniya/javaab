@@ -82,8 +82,10 @@ class CosmosRepo:
 
     # ── Feedback operations ───────────────────────────────────────────────────
 
-    async def save_feedback(self, feedback_data: dict):
-        logger.info(f"Feedback saved to DB: {feedback_data}")
+    async def save_bookmark(self, bookmark_data: dict):
+        """Upsert a bookmark record for an assistant message."""
+        logger.info(f"Bookmark saved: msg={bookmark_data.get('message_id')} conv={bookmark_data.get('conversation_id')}")
+        # TODO: Cosmos DB upsert into 'bookmarks' container keyed by message_id + user_id
 
     async def flag_message_for_review(self, message_id: str):
         """Set needs_review=true and increment dislike_count on a message."""

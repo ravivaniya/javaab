@@ -33,6 +33,7 @@ export default function Chat() {
     quota,
     usage,
     sessionWordCount,
+    bookmarkChat,
   } = useChat();
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -135,6 +136,11 @@ export default function Chat() {
                               newContent,
                               originalContent,
                             )
+                        : undefined
+                    }
+                    onBookmark={
+                      m.role === "assistant" && activeId
+                        ? (msgId) => bookmarkChat(activeId, msgId)
                         : undefined
                     }
                   />

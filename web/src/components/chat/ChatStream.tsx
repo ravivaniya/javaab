@@ -79,7 +79,7 @@ export function ChatStream({ request, userId, plan, usageCount, onComplete, onEr
 
     const commonCallbacks = {
       onChunk: (chunk: string) => setContent((prev) => prev + chunk),
-      onMetadata: (model: string, conf: string, fc?: boolean) => {
+      onMetadata: (model: string, conf: string, fc?: boolean, convId?: string, score?: number) => {
         if (model) setModelName(model);
         setFromCache(fc ?? false);
         const c = conf?.toLowerCase();
@@ -87,9 +87,13 @@ export function ChatStream({ request, userId, plan, usageCount, onComplete, onEr
           high: fc ? "verified" : "ai",
           medium: "ai",
           low: "low",
-          none: "low",
+          none: "ai",
         };
-        setConfidence(confMap[c] ?? "ai");
+        const resolved = confMap[c] ?? "ai";
+        setConfidence(resolved);
+        console.log(
+          `[javaab:confidence] chat_id=${convId ?? "unknown"} tag=${resolved} raw=${conf} score=${score ?? 0} from_cache=${fc ?? false} model=${model}`
+        );
       },
       onSources: (sources: Record<string, unknown>[]) => {
         if (sources?.length) {
