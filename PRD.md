@@ -629,7 +629,7 @@ FORMULA 7: Customer Acquisition Cost (CAC) vs LTV
 | Risk                                           | Mitigation                                                                                |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | **₹199/₹299 pricing is below cost (at scale)** | Intentional — B2C is acquisition, B2B Custom is profit center. Monitor burn rate tightly. |
-| **Free users overloading**                     | Text-only, 50/month cap, Phi-4-mini only (cheapest), no image                             |
+| **Free users overloading**                     | Text-only, 50/month cap, GPT-4.1-nano only (cheapest), no image                             |
 | **Custom plan churn**                          | Lock-in via branded exports, student data, lesson plans stored on platform                |
 | **Razorpay payment failures**                  | Auto-retry 3 times, dunning emails, UPI Autopay fallback                                  |
 | **GST compliance**                             | Register for GST before launch; use Razorpay's auto-GST invoicing                         |
@@ -678,7 +678,7 @@ FORMULA 7: Customer Acquisition Cost (CAC) vs LTV
 │   │ AZURE AI SEARCH│  │ AZURE REDIS CACHE   │  │ AZURE OPENAI │  │
 │   │ Basic → S1     │  │ C0 → C1             │  │ + AI FOUNDRY │  │
 │   │                │  │                     │  │              │  │
-│   │ 2 indexes:     │  │ Verified answers +  │  │ Phi-4-mini   │  │
+│   │ 2 indexes:     │  │ Verified answers +  │  │ GPT-4.1-nano   │  │
 │   │ textbook_chunks│  │ sessions + rate     │  │ GPT-4.1-mini  │  │
 │   │ verified_ans.  │  │ limit counters      │  │ GPT-4.1       │  │
 │   └────────────────┘  └─────────────────────┘  └──────────────┘  │
@@ -715,7 +715,7 @@ FORMULA 7: Customer Acquisition Cost (CAC) vs LTV
 | **Backend**            | Azure Container Apps         | Consumption     | ~$0→$50             | Auto-scale to zero               |
 | **Container Registry** | Azure Container Registry     | Basic           | ~$5/mo              | Store Docker images              |
 | **Secrets**            | Azure Key Vault              | Standard        | ~$0.50/mo           | All API keys, connection strings |
-| **LLM Simple**         | Phi-4-mini                   | Serverless      | $0.075/$0.30 per 1M | Text-only simple queries         |
+| **LLM Simple**         | GPT-4.1-nano                   | Serverless      | $0.075/$0.30 per 1M | Text-only simple queries         |
 | **LLM Medium**         | GPT-4.1-mini                 | Pay-go          | $0.15/$0.60 per 1M  | Medium + Image OCR               |
 | **LLM Complex**        | GPT-4.1                      | Pay-go          | $2.50/$10.00 per 1M | Complex math/science             |
 | **Embeddings**         | text-embedding-3-small       | Pay-go          | $0.02 per 1M        | Multilingual                     |
@@ -746,7 +746,7 @@ FORMULA 7: Customer Acquisition Cost (CAC) vs LTV
 
 | Model               | Publisher | Input/1M tokens | Output/1M tokens | Vision? | Indic Language Quality |
 | ------------------- | --------- | --------------- | ---------------- | ------- | ---------------------- |
-| **Phi-4-mini** ✅   | Microsoft | **$0.075**      | **$0.30**        | ❌      | Good for simple tasks  |
+| **GPT-4.1-nano** ✅   | Microsoft | **$0.075**      | **$0.30**        | ❌      | Good for simple tasks  |
 | **GPT-4.1-mini** ✅ | OpenAI    | $0.15           | $0.60            | ✅      | Very Good              |
 | Llama 4 Maverick    | Meta      | $0.25           | $1.00            | ✅      | Good                   |
 | **GPT-4.1** ✅      | OpenAI    | $2.50           | $10.00           | ✅      | **Best**               |
@@ -757,8 +757,8 @@ FORMULA 7: Customer Acquisition Cost (CAC) vs LTV
 
 | Our Choice                          | Why, Not Others                                                                                                             |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **Phi-4-mini** for simple queries   | 50% cheaper than GPT-4.1-mini; equally accurate for definitions/factual recall; best Azure integration                      |
-| **GPT-4.1-mini** for medium queries | Has vision (Phi-4-mini doesn't); best price-to-quality for concept explanations; excellent Hindi/Gujarati                   |
+| **GPT-4.1-nano** for simple queries   | 50% cheaper than GPT-4.1-mini; equally accurate for definitions/factual recall; best Azure integration                      |
+| **GPT-4.1-mini** for medium queries | Has vision (GPT-4.1-nano doesn't); best price-to-quality for concept explanations; excellent Hindi/Gujarati                   |
 | **GPT-4.1** for complex queries     | Non-negotiable for accuracy — best-in-class for multi-step math, physics numericals. No other model matches it consistently |
 | **NOT Llama 4**                     | Good model, but costs more than GPT-4.1-mini and less accurate for Hindi/Gujarati math                                      |
 | **NOT Claude**                      | Expensive output tokens ($15/1M); weaker on math than GPT-4.1                                                               |
@@ -878,7 +878,7 @@ Week 3: Embed & Index
 | Gujarati (Roman)   | "prakash sanshleshan etle shu?"      | Latin      |
 | Mixed              | "Class 10 ma photosynthesis samjhao" | Mixed      |
 
-GPT-4.1 and Phi-4-mini natively understand all input forms. No separate translation pipeline is needed — building one would add cost and complexity with no accuracy benefit.
+GPT-4.1 and GPT-4.1-nano natively understand all input forms. No separate translation pipeline is needed — building one would add cost and complexity with no accuracy benefit.
 
 ### Cross-Lingual RAG Search
 
@@ -888,7 +888,7 @@ Student asks: "પ્રકાશસંશ્લેષણ સમજાવો" (G
     ├── Search 1: Direct with original query
     │   → Finds GSEB Gujarati chunks ✓
     │
-    ├── Search 2: Translate to English (via Phi-4-mini, ~$0.00002)
+    ├── Search 2: Translate to English (via GPT-4.1-nano, ~$0.00002)
     │   → "Explain photosynthesis"
     │   → Finds NCERT English chunks ✓
     │
@@ -998,7 +998,7 @@ Avg similarity of top 5 results:
                             │ MISS (similarity < 0.93)
                     ┌───────▼───────┐
                     │  CLASSIFY     │
-                    │  (Phi-4-mini  │
+                    │  (GPT-4.1-nano  │
                     │   ~100 tokens │
                     │   ~$0.00001)  │
                     └───────┬───────┘
@@ -1007,7 +1007,7 @@ Avg similarity of top 5 results:
               │             │             │
        ┌──────▼──────┐ ┌───▼────┐ ┌──────▼──────┐
        │   TIER 1    │ │ TIER 2 │ │   TIER 3    │
-       │  Phi-4-mini │ │GPT-4.1  │ │   GPT-4.1    │
+       │  GPT-4.1-nano │ │GPT-4.1  │ │   GPT-4.1    │
        │             │ │ -mini  │ │             │
        │  Simple:    │ │Medium: │ │  Complex:   │
        │  Definitions│ │Explain │ │  Multi-step │
@@ -1025,7 +1025,7 @@ Avg similarity of top 5 results:
 | Tier                 | % of Queries | Model        | Cost/query (avg) |
 | -------------------- | ------------ | ------------ | ---------------- |
 | **0 — Cache**        | 25%          | None         | ₹0.00            |
-| **1 — Simple**       | 40%          | Phi-4-mini   | ₹0.11            |
+| **1 — Simple**       | 40%          | GPT-4.1-nano   | ₹0.11            |
 | **2 — Medium**       | 15%          | GPT-4.1-mini | ₹0.22            |
 | **3 — Complex**      | 20%          | GPT-4.1      | ₹3.50            |
 | **Weighted Average** |              |              | **₹0.83/query**  |
@@ -1475,7 +1475,7 @@ Response (SSE streamed):
   "type": "chunk | metadata | sources | done",
   "content": "Markdown + LaTeX chunk",
   "sources": [{ "book": "...", "chapter": "...", "page": 95 }],
-  "model_used": "phi-4-mini",
+  "model_used": "gpt-4.1-nano",
   "confidence": "high"
 }
 
@@ -1523,7 +1523,7 @@ and public documentation at docs.tryjavaab.com.
 
 ```
 data: {"type": "chunk",    "content": "partial text here..."}
-data: {"type": "metadata", "model": "phi-4-mini", "confidence": "high"}
+data: {"type": "metadata", "model": "gpt-4.1-nano", "confidence": "high"}
 data: {"type": "sources",  "sources": [...]}
 data: {"type": "done"}
 ```
@@ -1895,7 +1895,7 @@ Gujarati in both native scripts and Roman transliteration.
 - Database: Azure Cosmos DB (free tier, serverless)
 - Cache: Azure Redis Cache (C0 Basic)
 - Search: Azure AI Search (Basic tier, hybrid vector + keyword)
-- AI Models: Azure OpenAI (GPT-4.1, GPT-4.1-mini), Azure AI Foundry (Phi-4-mini)
+- AI Models: Azure OpenAI (GPT-4.1, GPT-4.1-mini), Azure AI Foundry (GPT-4.1-nano)
 - Embeddings: text-embedding-3-small via Azure OpenAI
 - Storage: Azure Blob Storage
 - Auth: current MVP uses local phone OTP mock + backend registration stub; production target is Azure AD B2C phone OTP
@@ -2429,11 +2429,11 @@ TIER 0 — VERIFIED CACHE:
 - If similarity >= 0.93 → cache HIT → retrieve from Redis → return immediately
 - Log: cache_hit=True
 
-TIER 1 — PHI-4-MINI (simple queries):
-- Classify complexity using Phi-4-mini (~100 tokens)
+TIER 1 — GPT-4.1-NANO (simple queries):
+- Classify complexity using GPT-4.1-nano (~100 tokens)
 - SIMPLE = definitions, factual recall, "what is", direct answers
 - COMPLEX = calculations, multi-step, proofs, analysis, comparisons
-- If SIMPLE → route to Phi-4-mini (Azure AI Foundry endpoint)
+- If SIMPLE → route to GPT-4.1-nano (Azure AI Foundry endpoint)
 
 TIER 2 — GPT-4.1-mini (medium + image):
 - MEDIUM complexity → GPT-4.1-mini
@@ -2447,7 +2447,7 @@ Implementation requirements:
 - Async throughout (httpx for API calls)
 - Track token usage and cost per query (log to Cosmos DB)
 - Retry with exponential backoff (3 retries)
-- Fallback: if Phi-4-mini fails → GPT-4.1-mini
+- Fallback: if GPT-4.1-nano fails → GPT-4.1-mini
 - Streaming responses (SSE) for all tiers
 - Circuit breaker: if model fails 5x in 1 minute, skip it
 - Return ModelRouterResponse: answer, model_used, tokens_in, tokens_out,
@@ -2469,7 +2469,7 @@ HYBRID SEARCH:
 
 CROSS-LINGUAL SEARCH (for non-English queries):
 1. Search directly with original query (finds vernacular chunks)
-2. Translate query to English via Phi-4-mini (~50 tokens, ~$0.00002)
+2. Translate query to English via GPT-4.1-nano (~50 tokens, ~$0.00002)
 3. Search again with English translation (finds NCERT English chunks)
 4. Merge both sets, deduplicate, return top 5
 
@@ -2520,7 +2520,7 @@ VerifiedAnswer data model:
 @agent Implement llm_service.py.
 
 THREE MODEL CLIENTS:
-1. Phi-4-mini (Azure AI Foundry): httpx, streaming, text classification
+1. GPT-4.1-nano (Azure AI Foundry): httpx, streaming, text classification
 2. GPT-4.1-mini (Azure OpenAI): openai SDK, streaming, vision support for OCR
 3. GPT-4.1 (Azure OpenAI): openai SDK, streaming, complex reasoning
 
@@ -2531,7 +2531,7 @@ METHODS:
 
 - async classify_query(query: str) → QueryComplexity  # SIMPLE/MEDIUM/COMPLEX
 - async extract_text_from_image(image_base64: str) → str  # GPT-4.1-mini Vision
-- async translate_to_english(text: str) → str  # Phi-4-mini, ~50 tokens
+- async translate_to_english(text: str) → str  # GPT-4.1-nano, ~50 tokens
 
 IMPORTANT:
 - Track input_tokens, output_tokens, model_name per call
@@ -2584,7 +2584,7 @@ POST /chat/ask pipeline:
 
 STREAMING SSE FORMAT:
 data: {"type": "chunk",    "content": "..."}
-data: {"type": "metadata", "model": "phi-4-mini", "confidence": "high"}
+data: {"type": "metadata", "model": "gpt-4.1-nano", "confidence": "high"}
 data: {"type": "sources",  "sources": [...]}
 data: {"type": "done"}
 
@@ -2954,11 +2954,11 @@ Keep UI clean and efficient (shadcn/ui). Mobile-responsive (teachers use phones)
 
 1. test_model_router.py:
    - Cache hit returns verified answer instantly
-   - Simple query routes to Phi-4-mini
+   - Simple query routes to GPT-4.1-nano
    - Medium query routes to GPT-4.1-mini
    - Complex math routes to GPT-4.1
    - Image query routes to GPT-4.1-mini for OCR
-   - Fallback: Phi-4-mini fails → GPT-4.1-mini
+   - Fallback: GPT-4.1-nano fails → GPT-4.1-mini
    - Rate limiting: Free user blocked after 50 queries
 
 2. test_rag_service.py:
@@ -3032,7 +3032,7 @@ Print summary: "✅ Seeded: 5 students, 50 verified answers, 5 teachers,
 - [ ] Azure Cosmos DB collections created
 - [ ] Azure Blob Storage containers created
 - [ ] Azure OpenAI models deployed (GPT-4.1, GPT-4.1-mini)
-- [ ] Azure AI Foundry Phi-4-mini endpoint active
+- [ ] Azure AI Foundry GPT-4.1-nano endpoint active
 - [ ] Azure Key Vault configured with all secrets
 - [ ] SSL certificates valid for all endpoints
 - [ ] Custom domain configured (app.tryjavaab.com)

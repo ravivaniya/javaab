@@ -34,7 +34,7 @@ class RagService:
             "AZURE_OPENAI_EMBEDDING_DEPLOYMENT", "text-embedding-3-small"
         )
         self.translation_deployment = os.getenv(
-            "AZURE_PHI_MINI_DEPLOYMENT", "phi-4-mini"
+            "AZURE_OPENAI_GPT4.1_NANO_DEPLOYMENT", "gpt-4.1-nano"
         )
 
     async def close(self):
@@ -69,7 +69,7 @@ class RagService:
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
-            logger.error(f"Translation via Phi-4-mini failed: {e}")
+            logger.error(f"Translation via GPT-4.1-nano failed: {e}")
             return query
 
     def _build_filter(self, filters: Dict[str, Any]) -> Optional[str]:

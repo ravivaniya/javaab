@@ -12,7 +12,7 @@ from app.models.schemas import ModelRouterResponse
 logger = logging.getLogger(__name__)
 
 # Model deployment names
-TIER_1_MODEL = os.getenv("AZURE_PHI_MINI_DEPLOYMENT", "phi-4-mini")
+TIER_1_MODEL = os.getenv("AZURE_OPENAI_GPT4.1_NANO_DEPLOYMENT", "gpt-4.1-nano")
 TIER_2_MODEL = os.getenv("AZURE_GPT4.1_MINI_DEPLOYMENT", "gpt-4.1-mini")
 TIER_3_MODEL = os.getenv("AZURE_GPT4.1_DEPLOYMENT", "gpt-4.1")
 

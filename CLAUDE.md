@@ -7,13 +7,13 @@ Gujarati in both native scripts and Roman transliteration.
 
 ## Tech Stack
 - Backend: Python 3.12, FastAPI, uvicorn, async everywhere
-- Web Frontend: Next.js 16+ (App Router), TypeScript, React, Tailwind CSS, framer-motion (for smooth micro-animations), lucide-react (for icons), shadcn/ui
+- Web Frontend: TypeScript, React (Vite.js), Tailwind CSS, framer-motion (for smooth micro-animations), lucide-react (for icons), shadcn/ui
 - UI/UX Guidelines: Swiggy-inspired mobile-first design, clean aesthetics, visually premium with vibrant colors (Orange `#FC8019`, Green `#10B981`, Purple `#8B5CF6`)
 - Mobile: React Native with Expo (managed workflow)
 - Database: Azure Cosmos DB (free tier, serverless)
 - Cache: Azure Redis Cache (C0 Basic)
 - Search: Azure AI Search (Basic tier, hybrid vector + keyword)
-- AI Models: Azure OpenAI (GPT-4.1, GPT-4.1-mini), Azure AI Foundry (Phi-4-mini)
+- AI Models: Azure OpenAI (GPT-4.1, GPT-4.1-mini, GPT-4.1-nano)
 - Embeddings: text-embedding-3-small via Azure OpenAI
 - Storage: Azure Blob Storage
 - Auth: Azure AD B2C (phone OTP)
