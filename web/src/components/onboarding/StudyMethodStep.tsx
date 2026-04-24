@@ -36,7 +36,7 @@ export function StudyMethodStep({ value, onSelect }: StudyMethodStepProps) {
               onClick={() => onSelect(m.id)}
               className={cn(
                 "flex flex-col items-start gap-3 rounded-3xl border-2 bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-soft",
-                active ? "border-primary bg-primary/5 shadow-soft" : "border-black/5",
+                active ? "border-primary bg-primary/5 shadow-soft" : "border-border",
               )}
               aria-pressed={active}
             >

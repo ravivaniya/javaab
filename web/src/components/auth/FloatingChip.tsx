@@ -31,7 +31,7 @@ export function FloatingChip({ text, lang, className, delay = 0, rotate = 0 }: F
       <span className="grid h-6 w-6 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
         {langLabel[lang]}
       </span>
-      <span className="font-medium text-foreground">{text}</span>
+      <span className="font-medium text-neutral-900">{text}</span>
     </motion.div>
   );
 }

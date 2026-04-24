@@ -50,7 +50,7 @@ export function StruggleStep({
               onClick={() => onSelectStruggle(s.id)}
               className={cn(
                 "flex w-full items-center gap-3 rounded-3xl border-2 bg-card px-4 py-3.5 text-left transition-all hover:-translate-y-0.5 hover:shadow-soft",
-                active ? "border-primary bg-primary/5 shadow-soft" : "border-black/5",
+                active ? "border-primary bg-primary/5 shadow-soft" : "border-border",
               )}
               aria-pressed={active}
             >

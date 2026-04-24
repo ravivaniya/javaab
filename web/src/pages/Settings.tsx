@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Copy, Check } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -155,7 +156,7 @@ export default function Settings() {
                 maxLength={20}
                 onChange={(e) => setNameDraft(e.target.value)}
                 placeholder="e.g. Rahul, Priya..."
-                className="h-12 rounded-2xl border-black/10 px-4 py-3 pr-16 text-base"
+                className="h-12 rounded-2xl border-border px-4 py-3 pr-16 text-base"
               />
               <span className="pointer-events-none absolute bottom-2 right-3 text-[11px] text-muted-foreground">
                 {nameDraft.length}/20
@@ -317,12 +318,21 @@ export default function Settings() {
             </div>
           </Section>
 
-          {/* SECTION 4 — ACCOUNT */}
+          {/* SECTION 4 — APPEARANCE */}
+          <Section label="Appearance">
+            <FieldLabel>Theme</FieldLabel>
+            <ThemeToggle variant="segmented" />
+            <p className="mt-2 text-xs text-muted-foreground">
+              "System" follows your device setting.
+            </p>
+          </Section>
+
+          {/* SECTION 5 — ACCOUNT */}
           <Section label="Account">
             <Button
               variant="outline"
               onClick={() => setLogoutOpen(true)}
-              className="w-full rounded-pill border-black/10 font-bold"
+              className="w-full rounded-pill border-border font-bold"
             >
               Log out
             </Button>
@@ -457,7 +467,7 @@ function Chip({
         "rounded-pill border px-4 py-2 text-sm font-semibold transition-colors",
         active
           ? "border-primary bg-primary text-primary-foreground"
-          : "border-black/10 bg-background text-foreground hover:bg-muted",
+          : "border-border bg-background text-foreground hover:bg-muted",
       )}
     >
       {children}

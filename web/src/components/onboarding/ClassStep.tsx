@@ -60,7 +60,7 @@ export function ClassStep({
                 "h-14 min-w-[64px] rounded-pill border-2 px-6 text-lg font-bold transition-all",
                 active
                   ? "border-primary bg-primary text-primary-foreground shadow-glow"
-                  : "border-black/5 bg-card text-foreground hover:border-primary/40",
+                  : "border-border bg-card text-foreground hover:border-primary/40",
               )}
               aria-pressed={active}
             >

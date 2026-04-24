@@ -75,6 +75,23 @@
     --border: 0 0% 20%;
     --input: 0 0% 20%;
     --ring: 24 98% 54%;
+
+    /* Subject / brand accents — slightly brighter in dark for contrast */
+    --cbse: 217 91% 65%;
+    --gseb: 24 98% 60%;
+    --plus: 262 83% 72%;
+    --pro: 142 71% 50%;
+    --success: 142 71% 50%;
+    --warning: 38 92% 55%;
+
+    --sidebar-background: 0 0% 10%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 24 98% 54%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 24 98% 54%;
   }
 }
 

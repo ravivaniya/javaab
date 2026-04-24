@@ -39,15 +39,17 @@ export function BoardStep({
       <div className="space-y-2">
         <label htmlFor="display-name" className="block text-sm font-semibold">
           What should we call you?
+          <span className="ml-1 text-destructive" aria-label="required">*</span>
         </label>
         <div className="relative">
           <Input
             id="display-name"
             value={name}
             maxLength={20}
+            required
             onChange={(e) => onChangeName(e.target.value)}
             placeholder="e.g. Rahul, Priya..."
-            className="h-12 rounded-2xl border-black/10 px-4 pr-16 text-base"
+            className="h-12 rounded-2xl border-border px-4 pr-16 text-base"
           />
           <span className="pointer-events-none absolute bottom-2 right-3 text-[11px] text-muted-foreground">
             {name.length}/20
@@ -68,7 +70,7 @@ export function BoardStep({
                   onClick={() => onSelectBoard(b.id)}
                   className={cn(
                     "group relative flex w-full items-center gap-4 rounded-3xl border-2 bg-card p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-soft sm:p-5",
-                    active ? "border-primary bg-primary/5 shadow-soft" : "border-black/5",
+                    active ? "border-primary bg-primary/5 shadow-soft" : "border-border",
                   )}
                 >
                   <div

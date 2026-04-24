@@ -67,7 +67,7 @@ export default function Onboarding() {
     )
       return;
     updateUser({
-      name: name.trim() || undefined,
+      name: name.trim(),
       board,
       classNum,
       languages,
@@ -104,7 +104,7 @@ export default function Onboarding() {
 
   // Per-step validation for Next button.
   const nextDisabled =
-    (step === 1 && (!board || attendsCoaching === undefined)) ||
+    (step === 1 && (!name.trim() || !board || attendsCoaching === undefined)) ||
     (step === 2 && !classNum) ||
     (step === 3 && languages.length === 0) ||
     (step === 4 && !studyMethod) ||

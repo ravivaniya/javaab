@@ -8,6 +8,7 @@ import {
   Ticket,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -90,6 +91,7 @@ export function AppHeader({ showBack = false, leftSlot, rightSlot }: Props) {
 
         <div className="flex items-center gap-1.5 sm:gap-2">
           {rightSlot}
+          <ThemeToggle className="hidden sm:inline-flex" />
           {isFree && (
             <Link
               to="/subscribe"
