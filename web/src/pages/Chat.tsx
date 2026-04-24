@@ -22,7 +22,9 @@ export default function Chat() {
     setActiveId,
     newChat,
     removeChat,
+    renameChat,
     send,
+    sendEdit,
     streamRequest,
     onStreamComplete,
     onStreamError,
@@ -30,6 +32,7 @@ export default function Chat() {
     remaining,
     quota,
     usage,
+    sessionWordCount,
   } = useChat();
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -65,6 +68,7 @@ export default function Chat() {
       onSelect={setActiveId}
       onNew={newChat}
       onDelete={removeChat}
+      onRename={renameChat}
       onCloseMobile={() => setMobileOpen(false)}
       collapsed={!mobile && collapsed}
       onToggleCollapse={mobile ? undefined : () => setCollapsed((c) => !c)}
@@ -97,7 +101,7 @@ export default function Chat() {
         {/* Desktop sidebar */}
         <div
           className={`hidden h-full shrink-0 border-r border-border transition-[width] duration-200 md:block ${
-            collapsed ? "w-[60px]" : "w-[260px]"
+            collapsed ? "w-[60px]" : "w-[280px]"
           }`}
         >
           {Sidebar()}
@@ -110,14 +114,30 @@ export default function Chat() {
             {!active || active.messages.length === 0 ? (
               <QuickStartChips
                 name={user?.name}
+                classNum={user?.classNum}
+                board={user?.board}
                 onPick={(t) => {
                   if (!limitReached) send(t);
                 }}
               />
             ) : (
-              <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6 sm:px-6">
+              <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 sm:px-6">
                 {active.messages.map((m) => (
-                  <MessageBubble key={m.id} message={m} />
+                  <MessageBubble
+                    key={m.id}
+                    message={m}
+                    onEdit={
+                      m.role === "user" && activeId
+                        ? (msgId, newContent, originalContent) =>
+                            sendEdit(
+                              activeId,
+                              msgId,
+                              newContent,
+                              originalContent,
+                            )
+                        : undefined
+                    }
+                  />
                 ))}
                 {streamRequest && (
                   <ChatStream
@@ -142,9 +162,12 @@ export default function Chat() {
               onSend={send}
               disabled={isResponding || limitReached}
               isPaid={isPaid}
+              sessionWordCount={sessionWordCount}
+              onNewChat={newChat}
             />
             <p className="mx-auto mt-2 max-w-3xl text-center text-[11px] text-muted-foreground">
-              Javaab can make mistakes. Verify important answers with your textbook.
+              Javaab can make mistakes. Verify important answers with your
+              textbook.
             </p>
           </div>
         </div>

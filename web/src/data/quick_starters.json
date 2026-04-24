@@ -1,0 +1,62 @@
+{
+  "default": [
+    "Explain photosynthesis",
+    "Solve a quadratic equation",
+    "Causes of the French Revolution",
+    "Newton's three laws of motion"
+  ],
+  "6_cbse": [
+    "What is a natural number?",
+    "Explain the water cycle",
+    "Who was Ashoka the Great?",
+    "What is photosynthesis?"
+  ],
+  "7_cbse": [
+    "What is a rational number?",
+    "Explain nutrition in plants",
+    "What caused the French Revolution?",
+    "What is the difference between weather and climate?"
+  ],
+  "8_cbse": [
+    "What is a linear equation?",
+    "Explain cell structure",
+    "What is the Quit India Movement?",
+    "What is sound and how does it travel?"
+  ],
+  "9_cbse": [
+    "Explain Newton's laws of motion",
+    "What is cell division (mitosis)?",
+    "What is democracy and its features?",
+    "What is the difference between atoms and molecules?"
+  ],
+  "10_cbse": [
+    "Explain law of conservation of mass",
+    "Solve: 2x² - 5x + 3 = 0 step by step",
+    "Newton's third law with example",
+    "What is quadratic formula?"
+  ],
+  "11_cbse": [
+    "Explain integration by parts",
+    "What are the laws of thermodynamics?",
+    "Explain Hund's rule of maximum multiplicity",
+    "What is simple harmonic motion?"
+  ],
+  "12_cbse": [
+    "Derive the lens maker's formula",
+    "What is Bayes' theorem with example?",
+    "Explain DNA replication",
+    "What is electrochemical series?"
+  ],
+  "10_gseb": [
+    "Ohm's law with example",
+    "Explain acid-base neutralization",
+    "What is Pythagoras theorem?",
+    "Describe the Indian independence movement"
+  ],
+  "12_gseb": [
+    "Explain electric field due to a dipole",
+    "What is Le Chatelier's principle?",
+    "Integrate ∫x·eˣ dx step by step",
+    "What is meiosis and why is it important?"
+  ]
+}

@@ -8,9 +8,13 @@ import {
   deleteConversation,
   getUsage,
   loadConversations,
+  markMessageEdited,
   PLAN_QUOTAS,
+  renameConversation,
+  truncateAfterMessage,
 } from "@/lib/chat";
 import { useAuth } from "./useAuth";
+import { ApiService } from "@/services/api";
 import type { ChatStreamRequest } from "@/components/chat/ChatStream";
 
 /** Reactive chat state for the current authed user. */
@@ -25,6 +29,8 @@ export function useChat() {
   const [streamRequest, setStreamRequest] = useState<ChatStreamRequest | null>(null);
   const [streamConversationId, setStreamConversationId] = useState<string | null>(null);
   const [isResponding, setIsResponding] = useState(false);
+  /** Cumulative word count for the active conversation (tracked client-side too). */
+  const [sessionWordCount, setSessionWordCount] = useState(0);
 
   // Sync from storage on cross-tab edits
   useEffect(() => {
@@ -41,6 +47,11 @@ export function useChat() {
     };
   }, [phone]);
 
+  // Reset session word count when active conversation changes
+  useEffect(() => {
+    setSessionWordCount(0);
+  }, [activeId]);
+
   const quota = PLAN_QUOTAS[user?.plan ?? "free"];
   const remaining = quota === Infinity ? Infinity : Math.max(0, quota - usage);
   const limitReached = remaining === 0;
@@ -51,6 +62,7 @@ export function useChat() {
     const c = createConversation(phone);
     setConversations(loadConversations(phone));
     setActiveId(c.id);
+    setSessionWordCount(0);
     return c;
   }, [phone]);
 
@@ -64,12 +76,30 @@ export function useChat() {
     [phone, activeId],
   );
 
+  const renameChat = useCallback(
+    async (id: string, newTitle: string) => {
+      if (!phone) return;
+      const conv = conversations.find((c) => c.id === id);
+      const prevTitle = conv?.title ?? "";
+      // Optimistic update
+      renameConversation(phone, id, newTitle);
+      setConversations(loadConversations(phone));
+      try {
+        await ApiService.updateConversationTitle(id, phone, newTitle);
+      } catch {
+        // Revert on failure
+        renameConversation(phone, id, prevTitle);
+        setConversations(loadConversations(phone));
+      }
+    },
+    [phone, conversations],
+  );
+
   const send = useCallback(
     async (text: string, imageUrl?: string) => {
       if (!phone || !text.trim() || isResponding) return;
       if (limitReached) return;
 
-      // Ensure we have an active conversation
       let convId = activeId;
       if (!convId) {
         const c = createConversation(phone);
@@ -89,6 +119,9 @@ export function useChat() {
       setUsage(newUsage);
       setConversations(loadConversations(phone));
 
+      const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+      setSessionWordCount((prev) => prev + wordCount);
+
       setIsResponding(true);
       setStreamConversationId(convId);
       setStreamRequest({
@@ -98,9 +131,35 @@ export function useChat() {
         classLevel: user?.classNum || 10,
         subject: active?.subject || "",
         language: user?.languages?.[0] || "en",
+        conversationId: convId,
       });
     },
     [phone, activeId, isResponding, limitReached, user, active?.subject],
+  );
+
+  /** Called when edit-mode resubmits a user message (branch from here). */
+  const sendEdit = useCallback(
+    (convId: string, messageId: string, newContent: string, originalContent: string) => {
+      if (!phone || isResponding) return;
+
+      // Optimistic: mark edited and trim downstream messages
+      markMessageEdited(phone, convId, messageId, newContent, originalContent);
+      truncateAfterMessage(phone, convId, messageId);
+      setConversations(loadConversations(phone));
+
+      setIsResponding(true);
+      setStreamConversationId(convId);
+      setStreamRequest({
+        query: newContent,
+        board: user?.board || "cbse",
+        classLevel: user?.classNum || 10,
+        subject: active?.subject || "",
+        language: user?.languages?.[0] || "en",
+        conversationId: convId,
+        editMessageId: messageId,
+      });
+    },
+    [phone, isResponding, user, active?.subject],
   );
 
   const onStreamComplete = useCallback(
@@ -128,7 +187,9 @@ export function useChat() {
     setActiveId,
     newChat,
     removeChat,
+    renameChat,
     send,
+    sendEdit,
     streamRequest,
     onStreamComplete,
     onStreamError,
@@ -138,5 +199,6 @@ export function useChat() {
     quota,
     remaining,
     limitReached,
+    sessionWordCount,
   };
 }

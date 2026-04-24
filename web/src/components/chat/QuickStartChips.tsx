@@ -1,20 +1,27 @@
 import { Sparkles } from "lucide-react";
-
-const SUGGESTIONS = [
-  "Explain photosynthesis",
-  "Solve a quadratic equation",
-  "Causes of the French Revolution",
-  "Newton's three laws of motion",
-];
+import quickStarters from "@/data/quick_starters.json";
 
 interface Props {
   onPick: (text: string) => void;
   name?: string;
+  classNum?: number;
+  board?: string;
 }
 
-/** Center-aligned empty state with quick-start chips. */
-export function QuickStartChips({ onPick, name }: Props) {
+function getChips(classNum?: number, board?: string): string[] {
+  if (classNum && board) {
+    const key = `${classNum}_${board.toLowerCase()}`;
+    const chips = (quickStarters as Record<string, string[]>)[key];
+    if (chips?.length) return chips;
+  }
+  return quickStarters.default;
+}
+
+/** Center-aligned empty state with class+board-aware quick-start chips. */
+export function QuickStartChips({ onPick, name, classNum, board }: Props) {
   const greeting = name?.trim() ? `Hi, ${name.trim()} 👋` : null;
+  const chips = getChips(classNum, board);
+
   return (
     <div className="flex h-full flex-col items-center justify-center px-6 text-center">
       <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-primary/10 text-primary">
@@ -30,7 +37,7 @@ export function QuickStartChips({ onPick, name }: Props) {
         Ask anything from your syllabus — in English, हिन्दी, or ગુજરાતી.
       </p>
       <div className="mt-8 flex max-w-2xl flex-wrap justify-center gap-2">
-        {SUGGESTIONS.map((s) => (
+        {chips.map((s) => (
           <button
             key={s}
             onClick={() => onPick(s)}

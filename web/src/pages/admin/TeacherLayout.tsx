@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { 
-  Building2, 
-  LayoutDashboard, 
-  LogOut, 
-  Menu, 
-  Ticket, 
-  BarChart 
+import {
+  Building2,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Ticket,
+  BarChart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -19,7 +19,11 @@ export default function TeacherLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
-    { label: "Dashboard", icon: LayoutDashboard, path: "/admin/teacher/dashboard" },
+    {
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      path: "/admin/teacher/dashboard",
+    },
     { label: "Tickets", icon: Ticket, path: "/admin/teacher/tickets" },
     { label: "Analytics", icon: BarChart, path: "/admin/teacher/analytics" },
   ];
@@ -74,7 +78,11 @@ export default function TeacherLayout() {
           <p className="text-sm font-semibold">{user?.phone}</p>
           <p className="text-xs text-muted-foreground">Admin Access</p>
         </div>
-        <Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={handleLogout}>
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-muted-foreground"
+          onClick={handleLogout}
+        >
           <LogOut className="mr-3 h-5 w-5" />
           Logout
         </Button>
@@ -85,7 +93,7 @@ export default function TeacherLayout() {
   return (
     <div className="flex h-screen w-full bg-background">
       {/* Desktop sidebar */}
-      <div className="hidden h-full w-[260px] shrink-0 border-r border-border md:block">
+      <div className="hidden h-full w-[280px] shrink-0 border-r border-border md:block">
         <SidebarContent />
       </div>
 
@@ -95,7 +103,12 @@ export default function TeacherLayout() {
         <header className="flex h-14 items-center gap-3 border-b border-border bg-card/60 px-4 backdrop-blur md:hidden">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Open menu" className="-ml-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Open menu"
+                className="-ml-2"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>

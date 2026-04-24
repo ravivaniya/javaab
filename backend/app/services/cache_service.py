@@ -35,6 +35,10 @@ class CacheStats(BaseModel):
     hit_rate: float
     top_uncached_questions: List[str]
 
+# TODO: After ingesting all NCERT + GSEB books, re-run embedding pipeline.
+# TODO: Run build_verified_cache.py to generate 5,000 seed verified answers.
+# TODO: Raise CACHE_HIT_THRESHOLD back to 0.93 after cache has 2,000+ entries.
+
 class CacheService:
     def __init__(self):
         # OpenAI Client for embeddings
@@ -125,7 +129,10 @@ class CacheService:
             if best_match:
                 sim = best_match.get("@search.score", 0.0)
                 
-                if sim >= 0.93:
+                # TODO: raise to 0.93 after 2,000+ verified answers in the index
+                CACHE_HIT_THRESHOLD = 0.88
+                logger.info(f"Cache check: score={sim:.3f}, threshold={CACHE_HIT_THRESHOLD}")
+                if sim >= CACHE_HIT_THRESHOLD:
                     cache_id = best_match.get("cache_id") or best_match.get("id")
                     if cache_id:
                         cached_json = await self.redis_client.get(cache_id)
