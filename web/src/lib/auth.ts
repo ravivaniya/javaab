@@ -36,6 +36,30 @@ export interface JavaabUser {
 const USER_KEY = "javaab.user";
 const PENDING_PLAN_KEY = "javaab.pendingPlan";
 const KNOWN_PHONES_KEY = "javaab.knownPhones";
+const TOKEN_KEY = "javaab.token";
+
+/** Read the stored JWT (or null). */
+export function getToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** Persist or clear the JWT. */
+export function setToken(token: string | null): void {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* noop */
+  }
+}
+
+export function clearToken(): void {
+  setToken(null);
+}
 
 /** Read current authenticated user (or null). */
 export function getUser(): JavaabUser | null {
@@ -56,6 +80,7 @@ export function setUser(user: JavaabUser): void {
 /** Clear session. */
 export function clearUser(): void {
   localStorage.removeItem(USER_KEY);
+  clearToken();
   window.dispatchEvent(new Event("javaab:auth"));
 }
 

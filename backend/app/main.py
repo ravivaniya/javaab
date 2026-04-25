@@ -7,6 +7,8 @@ from fastapi.responses import JSONResponse
 import logging
 
 from app.routes import chat, auth, tickets, admin, student
+from app.middleware.auth_middleware import AuthMiddleware
+from app.middleware.rate_limiter import RateLimiterMiddleware
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -30,6 +32,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Auth + rate limiting. Registration order matters: the last registered
+# middleware runs first on the inbound request, so RateLimiter is added
+# before Auth — that way Auth runs first and populates request.state.user_id
+# before RateLimiter reads it.
+app.add_middleware(RateLimiterMiddleware)
+app.add_middleware(AuthMiddleware)
 
 # Error handling middleware
 @app.middleware("http")

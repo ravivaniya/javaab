@@ -8,6 +8,44 @@ Usage:
 """
 
 import os, json, hashlib, re, argparse
+
+# ─── Chapter / heading detection ──────────────────────────────────
+# Match "Chapter 7", "CHAPTER 7", "Chapter 7 — Title", "अध्याय 7", "પ્રકરણ 7".
+_CHAPTER_RE = re.compile(
+    r"^\s*(?:chapter|CHAPTER|Chapter|अध्याय|પ્રકરણ)\s+(\d+)[\.\s:\-—]*(.*)$",
+    re.MULTILINE,
+)
+# Numbered headings like "7.2 Newton's Second Law".
+_NUMBERED_RE = re.compile(r"^\s*(\d{1,2})\.(\d{1,2})\s+([A-Z][^\n]{2,80})$", re.MULTILINE)
+
+
+def detect_chapter(text: str) -> tuple[int, str, str]:
+    """Return (chapter_number, chapter_name, topic) parsed from page/chunk text."""
+    chapter_number = 0
+    chapter_name = ""
+    topic = ""
+
+    if not text:
+        return chapter_number, chapter_name, topic
+
+    m = _CHAPTER_RE.search(text)
+    if m:
+        try:
+            chapter_number = int(m.group(1))
+        except (TypeError, ValueError):
+            chapter_number = 0
+        chapter_name = (m.group(2) or "").strip().splitlines()[0][:120] if m.group(2) else ""
+
+    m2 = _NUMBERED_RE.search(text)
+    if m2:
+        if not chapter_number:
+            try:
+                chapter_number = int(m2.group(1))
+            except (TypeError, ValueError):
+                pass
+        topic = (m2.group(3) or "").strip()[:120]
+
+    return chapter_number, chapter_name, topic
 from pathlib import Path
 from typing import Optional
 import fitz  # PyMuPDF
@@ -69,9 +107,10 @@ def extract_pdf(pdf_path: Path) -> list[dict]:
 
     if bad_page_nums:
         print(f"  ⚠️  {len(bad_page_nums)} pages need Azure DI OCR: {bad_page_nums[:5]}...")
-        # TODO: Implement Azure Document Intelligence fallback
-        # For now, log and skip — add for GSEB scanned books
-        pass
+        # Azure Document Intelligence fallback is not wired up. To enable for
+        # GSEB scanned books: install azure-ai-documentintelligence, set
+        # AZURE_DI_ENDPOINT/KEY, and add a call here that re-extracts each
+        # bad page via the prebuilt-read model.
 
     return good_pages
 
@@ -163,21 +202,33 @@ def ingest_pdf(pdf_path: Path, board: str, manifest: dict) -> int:
         print(f"  ❌ No text extracted from {pdf_path.name}")
         return 0
 
+    # Track the most recent chapter seen as we scan pages, so chunks from a
+    # chapter's body inherit the heading detected earlier in the file.
+    current_chapter_num = 0
+    current_chapter_name = ""
+
     all_chunks = []
     for page in pages:
+        # Update running chapter context from the page's full text first.
+        page_chap_num, page_chap_name, _ = detect_chapter(page["text"])
+        if page_chap_num:
+            current_chapter_num = page_chap_num
+            current_chapter_name = page_chap_name or current_chapter_name
+
         chunks = chunk_text(page["text"])
         for j, chunk_text_content in enumerate(chunks):
             if len(chunk_text_content.strip()) < 50:
                 continue
             chunk_id = f"{pdf_path.stem}_p{page['page_num']}_c{j}"
+            chap_num, chap_name, topic = detect_chapter(chunk_text_content)
             all_chunks.append({
                 "chunk_id": chunk_id,
                 "content": chunk_text_content,
                 "page_number": page["page_num"],
                 **meta,
-                "chapter_number": 0,   # TODO: detect from TOC
-                "chapter_name": "",    # TODO: detect from headings
-                "topic": "",           # TODO: detect from subheadings
+                "chapter_number": chap_num or current_chapter_num,
+                "chapter_name": chap_name or current_chapter_name,
+                "topic": topic,
             })
 
     # Embed in batches of 100

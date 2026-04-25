@@ -1,7 +1,31 @@
+import { getToken, clearToken, clearUser } from "@/lib/auth";
+
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 interface FetchOptions extends RequestInit {
   requiresAuth?: boolean;
+}
+
+/** Endpoints that must NEVER carry an Authorization header. */
+const PUBLIC_ENDPOINTS = ["/auth/login", "/auth/verify", "/auth/register", "/health"];
+
+function isPublicEndpoint(endpoint: string): boolean {
+  return PUBLIC_ENDPOINTS.some((p) => endpoint === p || endpoint.startsWith(`${p}?`));
+}
+
+/** Attach the stored JWT (if any) to a Headers object. */
+function attachAuth(headers: Headers, endpoint: string): void {
+  if (isPublicEndpoint(endpoint)) return;
+  const token = getToken();
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+}
+
+/** Centralised 401 handler — drop the stored session so the user re-logs in. */
+function handleUnauthorized(): void {
+  clearToken();
+  clearUser();
 }
 
 /** Base fetch wrapper with error handling. */
@@ -10,6 +34,7 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
+  attachAuth(headers, endpoint);
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
@@ -23,6 +48,12 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
       message = data.detail || data.message || message;
     } catch {
       message = `Status: ${response.status}`;
+    }
+    if (response.status === 401) {
+      handleUnauthorized();
+      const err = new Error(message);
+      err.name = "AuthError";
+      throw err;
     }
     if (response.status === 429) {
       const err = new Error(message);
@@ -96,8 +127,28 @@ async function consumeSseStream(
 export const ApiService = {
   // ── Auth / Profile ──────────────────────────────────────────────────────
 
-  async registerUser(data: { phone: string }) {
-    return fetchApi("/auth/register", { method: "POST", body: JSON.stringify(data) });
+  async registerUser(data: { phone: string; name?: string; class_level?: number; board?: string; language?: string; referral_code?: string }) {
+    return fetchApi<{
+      status: string;
+      user_id: string;
+      referral_code: string;
+      access_token: string;
+      token_type: string;
+    }>("/auth/register", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  async loginRequestOtp(phone: string) {
+    return fetchApi<{ status: string; message: string }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ phone }),
+    });
+  },
+
+  async verifyOtpRemote(phone: string, otp: string) {
+    return fetchApi<{ access_token: string; token_type: string; token: string }>("/auth/verify", {
+      method: "POST",
+      body: JSON.stringify({ phone, otp }),
+    });
   },
 
   async updateProfile(data: Record<string, unknown>) {
@@ -134,13 +185,21 @@ export const ApiService = {
     },
   ) {
     try {
+      const headers = new Headers({ "Content-Type": "application/json" });
+      attachAuth(headers, "/chat/ask");
       const response = await fetch(`${API_BASE_URL}/chat/ask`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(body),
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          handleUnauthorized();
+          const err = new Error("Session expired. Please sign in again.");
+          err.name = "AuthError";
+          throw err;
+        }
         if (response.status === 429 || response.status === 503) {
           const data = await response.json().catch(() => ({}));
           const err = new Error(data.detail?.message || data.detail || "Request limit reached");
@@ -171,16 +230,24 @@ export const ApiService = {
     },
   ) {
     try {
+      const headers = new Headers({ "Content-Type": "application/json" });
+      attachAuth(headers, `/chat/${conversationId}/message/${messageId}`);
       const response = await fetch(
         `${API_BASE_URL}/chat/${conversationId}/message/${messageId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify(body),
         },
       );
 
       if (!response.ok) {
+        if (response.status === 401) {
+          handleUnauthorized();
+          const err = new Error("Session expired. Please sign in again.");
+          err.name = "AuthError";
+          throw err;
+        }
         const data = await response.json().catch(() => ({}));
         throw new Error(data.detail || `Edit message failed: ${response.status}`);
       }

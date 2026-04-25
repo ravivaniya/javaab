@@ -1,52 +1,238 @@
+import os
 import logging
-from typing import Optional
+from typing import Optional, List, Dict, Any
+from datetime import datetime, timezone
+
+from azure.cosmos.aio import CosmosClient
+from azure.cosmos.exceptions import (
+    CosmosHttpResponseError,
+    CosmosResourceNotFoundError,
+)
 
 logger = logging.getLogger(__name__)
 
+
+# Container names — keep consistent with deployed Cosmos DB
+CONTAINER_USERS = "users"
+CONTAINER_CONVERSATIONS = "conversations"
+CONTAINER_MESSAGES = "messages"
+CONTAINER_BOOKMARKS = "bookmarks"
+CONTAINER_TICKETS = "tickets"
+CONTAINER_USAGE_LOGS = "usage_logs"
+CONTAINER_CACHE_CANDIDATES = "cache_candidates"
+CONTAINER_REVIEW_TASKS = "review_tasks"
+CONTAINER_FEEDBACK = "feedback"
+CONTAINER_REFERRALS = "referrals"
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
 class CosmosRepo:
     """
-    Data access layer for Azure Cosmos DB.
-    All methods are stubs that log operations; replace with real Cosmos SDK calls.
+    Async data-access layer for Azure Cosmos DB.
+
+    Lazy-initialised: if AZURE_COSMOS_ENDPOINT/KEY are missing or the SDK
+    raises during connect, every method degrades to a logged no-op so the
+    backend keeps running in local/dev mode without Azure credentials.
     """
+
     def __init__(self):
-        pass
+        self._client: Optional[CosmosClient] = None
+        self._db = None
+        self._containers: Dict[str, Any] = {}
+        self._init_attempted = False
+        self._available = False
+
+    def _ensure_clients(self):
+        if self._init_attempted:
+            return
+        self._init_attempted = True
+
+        endpoint = os.getenv("AZURE_COSMOS_ENDPOINT", "")
+        key = os.getenv("AZURE_COSMOS_KEY", "")
+        db_name = os.getenv("AZURE_COSMOS_DATABASE", "javaab")
+
+        if not endpoint or not key or "example" in endpoint:
+            logger.warning(
+                "Cosmos DB not configured (AZURE_COSMOS_ENDPOINT/KEY empty). "
+                "Repository will run in degraded mode."
+            )
+            return
+
+        try:
+            self._client = CosmosClient(endpoint, credential=key)
+            self._db = self._client.get_database_client(db_name)
+            for name in (
+                CONTAINER_USERS,
+                CONTAINER_CONVERSATIONS,
+                CONTAINER_MESSAGES,
+                CONTAINER_BOOKMARKS,
+                CONTAINER_TICKETS,
+                CONTAINER_USAGE_LOGS,
+                CONTAINER_CACHE_CANDIDATES,
+                CONTAINER_REVIEW_TASKS,
+                CONTAINER_FEEDBACK,
+                CONTAINER_REFERRALS,
+            ):
+                self._containers[name] = self._db.get_container_client(name)
+            self._available = True
+        except Exception as e:
+            logger.error(f"Failed to initialise Cosmos client: {e}")
+            self._available = False
+
+    def _container(self, name: str):
+        self._ensure_clients()
+        if not self._available:
+            return None
+        return self._containers.get(name)
 
     # ── User operations ──────────────────────────────────────────────────────
 
     async def get_user(self, user_id: str) -> dict:
-        """Fetch a user document."""
-        return {"id": user_id, "tier": "Free", "monthly_queries_used": 0}
+        """Fetch a user document; returns a Free-tier default if not found."""
+        default = {
+            "id": user_id,
+            "tier": "Free",
+            "monthly_queries_used": 0,
+        }
+        container = self._container(CONTAINER_USERS)
+        if container is None:
+            return default
+        try:
+            return await container.read_item(item=user_id, partition_key=user_id)
+        except CosmosResourceNotFoundError:
+            return default
+        except CosmosHttpResponseError as e:
+            logger.error(f"get_user({user_id}) failed: {e}")
+            return default
+
+    async def upsert_user(self, user: dict) -> dict:
+        """Create or update a user document. Requires `id`."""
+        container = self._container(CONTAINER_USERS)
+        if container is None:
+            return user
+        try:
+            user.setdefault("tier", "Free")
+            user.setdefault("monthly_queries_used", 0)
+            user.setdefault("created_at", _now_iso())
+            return await container.upsert_item(body=user)
+        except CosmosHttpResponseError as e:
+            logger.error(f"upsert_user failed: {e}")
+            return user
 
     async def increment_user_usage(self, user_id: str):
-        logger.info(f"Incremented usage for user: {user_id}")
+        container = self._container(CONTAINER_USERS)
+        if container is None:
+            logger.info(f"[degraded] increment_user_usage: {user_id}")
+            return
+        try:
+            await container.patch_item(
+                item=user_id,
+                partition_key=user_id,
+                patch_operations=[{"op": "incr", "path": "/monthly_queries_used", "value": 1}],
+            )
+        except CosmosResourceNotFoundError:
+            await self.upsert_user({"id": user_id, "monthly_queries_used": 1})
+        except CosmosHttpResponseError as e:
+            logger.error(f"increment_user_usage({user_id}) failed: {e}")
+
+    async def get_user_by_referral_code(self, code: str) -> Optional[dict]:
+        """Find a user document by its referral_code field."""
+        container = self._container(CONTAINER_USERS)
+        if container is None:
+            return None
+        try:
+            query = "SELECT TOP 1 * FROM c WHERE c.referral_code = @code"
+            params = [{"name": "@code", "value": code}]
+            async for item in container.query_items(query=query, parameters=params):
+                return item
+            return None
+        except CosmosHttpResponseError as e:
+            logger.error(f"get_user_by_referral_code failed: {e}")
+            return None
 
     # ── Conversation operations ───────────────────────────────────────────────
 
     async def create_conversation(self, conversation_data: dict) -> str:
         """Create a new conversation document. Returns conversation id."""
         conv_id = conversation_data.get("id", "")
-        logger.info(f"Conversation created in DB: {conv_id}")
+        container = self._container(CONTAINER_CONVERSATIONS)
+        if container is None:
+            logger.info(f"[degraded] create_conversation: {conv_id}")
+            return conv_id
+        try:
+            conversation_data.setdefault("created_at", _now_iso())
+            await container.create_item(body=conversation_data)
+        except CosmosHttpResponseError as e:
+            logger.error(f"create_conversation({conv_id}) failed: {e}")
         return conv_id
 
-    async def save_conversation(self, conversation_data: dict):
-        """Upsert a conversation/message log entry."""
-        logger.info(f"Conversation saved to DB: {conversation_data.get('id')}")
+    async def save_conversation(self, message_data: dict):
+        """
+        Persist a message document under its conversation. Despite the legacy
+        name, this writes to the messages container — see chat.py.
+        """
+        container = self._container(CONTAINER_MESSAGES)
+        if container is None:
+            logger.info(f"[degraded] save_conversation/message: {message_data.get('id')}")
+            return
+        try:
+            message_data.setdefault("created_at", _now_iso())
+            await container.upsert_item(body=message_data)
+        except CosmosHttpResponseError as e:
+            logger.error(f"save_conversation failed: {e}")
 
     async def get_conversation(self, conversation_id: str) -> Optional[dict]:
         """Fetch a conversation document by id."""
-        logger.info(f"Fetching conversation: {conversation_id}")
-        # TODO: Implement actual Cosmos DB query
-        return None
+        container = self._container(CONTAINER_CONVERSATIONS)
+        if container is None:
+            return None
+        try:
+            query = "SELECT TOP 1 * FROM c WHERE c.id = @id"
+            params = [{"name": "@id", "value": conversation_id}]
+            async for item in container.query_items(query=query, parameters=params):
+                return item
+            return None
+        except CosmosHttpResponseError as e:
+            logger.error(f"get_conversation({conversation_id}) failed: {e}")
+            return None
 
     async def update_conversation_title(self, conversation_id: str, title: str):
         """Update the title field of a conversation."""
-        logger.info(f"Updated title for conversation {conversation_id}: {title}")
-        # TODO: Cosmos DB partial update / patch
+        container = self._container(CONTAINER_CONVERSATIONS)
+        if container is None:
+            logger.info(f"[degraded] update_conversation_title: {conversation_id}")
+            return
+        try:
+            conv = await self.get_conversation(conversation_id)
+            if not conv:
+                return
+            student_id = conv.get("student_id", conversation_id)
+            await container.patch_item(
+                item=conversation_id,
+                partition_key=student_id,
+                patch_operations=[
+                    {"op": "set", "path": "/title", "value": title[:80]},
+                    {"op": "set", "path": "/updated_at", "value": _now_iso()},
+                ],
+            )
+        except CosmosHttpResponseError as e:
+            logger.error(f"update_conversation_title failed: {e}")
 
     async def append_message(self, conversation_id: str, message: dict):
-        """Append a message to an existing conversation's messages array."""
-        logger.info(f"Appended message {message.get('id')} to conversation {conversation_id}")
-        # TODO: Cosmos DB array append via stored procedure or replace
+        """Append a message document to the messages container."""
+        container = self._container(CONTAINER_MESSAGES)
+        if container is None:
+            logger.info(f"[degraded] append_message: {message.get('id')}")
+            return
+        try:
+            doc = {**message, "conversation_id": conversation_id}
+            doc.setdefault("created_at", _now_iso())
+            await container.upsert_item(body=doc)
+        except CosmosHttpResponseError as e:
+            logger.error(f"append_message failed: {e}")
 
     async def get_conversation_history(
         self,
@@ -55,93 +241,386 @@ class CosmosRepo:
         max_tokens: int = 1500,
     ) -> list:
         """
-        Return last N turns (user+assistant pairs) from a conversation,
-        trimmed to fit within max_tokens. Format: [{"role": ..., "content": ...}]
+        Return last N turns from a conversation, oldest→newest, trimmed to fit
+        within roughly max_tokens (~4 chars/token heuristic).
         """
-        logger.info(f"Fetching history for conversation: {conversation_id}")
-        # TODO: Implement real Cosmos DB query and token trimming
-        return []
+        container = self._container(CONTAINER_MESSAGES)
+        if container is None:
+            return []
+        try:
+            query = (
+                "SELECT TOP @top * FROM c WHERE c.conversation_id = @cid "
+                "ORDER BY c.created_at DESC"
+            )
+            params = [
+                {"name": "@cid", "value": conversation_id},
+                {"name": "@top", "value": max_turns * 2},
+            ]
+            rows: List[dict] = []
+            async for item in container.query_items(
+                query=query,
+                parameters=params,
+                partition_key=conversation_id,
+            ):
+                rows.append(item)
+            rows.reverse()
+
+            # Build OpenAI-style turn list, expanding query/reply pairs.
+            history: List[dict] = []
+            for r in rows:
+                if r.get("role") and r.get("content") is not None:
+                    history.append({"role": r["role"], "content": r["content"]})
+                    continue
+                if r.get("query"):
+                    history.append({"role": "user", "content": r["query"]})
+                if r.get("reply"):
+                    history.append({"role": "assistant", "content": r["reply"]})
+
+            # Trim to max_tokens using a 4-chars-per-token heuristic, keeping tail.
+            char_budget = max_tokens * 4
+            total = 0
+            trimmed: List[dict] = []
+            for turn in reversed(history):
+                size = len(turn.get("content", ""))
+                if total + size > char_budget and trimmed:
+                    break
+                total += size
+                trimmed.append(turn)
+            trimmed.reverse()
+            return trimmed
+        except CosmosHttpResponseError as e:
+            logger.error(f"get_conversation_history failed: {e}")
+            return []
 
     # ── Message operations ────────────────────────────────────────────────────
 
     async def get_message(self, conversation_id: str, message_id: str) -> Optional[dict]:
-        """Fetch a single message from a conversation."""
-        logger.info(f"Fetching message {message_id} from conversation {conversation_id}")
-        # TODO: Implement real Cosmos DB query
-        return None
+        container = self._container(CONTAINER_MESSAGES)
+        if container is None:
+            return None
+        try:
+            return await container.read_item(
+                item=message_id, partition_key=conversation_id
+            )
+        except CosmosResourceNotFoundError:
+            return None
+        except CosmosHttpResponseError as e:
+            logger.error(f"get_message failed: {e}")
+            return None
 
     async def update_message(self, conversation_id: str, message_id: str, updates: dict):
-        """Apply partial updates to a message document."""
-        logger.info(f"Updated message {message_id} in conversation {conversation_id}: {updates}")
-        # TODO: Cosmos DB patch
+        container = self._container(CONTAINER_MESSAGES)
+        if container is None:
+            logger.info(f"[degraded] update_message: {message_id}")
+            return
+        try:
+            ops = [{"op": "set", "path": f"/{k}", "value": v} for k, v in updates.items()]
+            if not ops:
+                return
+            await container.patch_item(
+                item=message_id,
+                partition_key=conversation_id,
+                patch_operations=ops,
+            )
+        except CosmosResourceNotFoundError:
+            logger.warning(f"update_message: {message_id} not found in {conversation_id}")
+        except CosmosHttpResponseError as e:
+            logger.error(f"update_message failed: {e}")
 
     async def delete_messages_after(self, conversation_id: str, message_id: str):
-        """Delete all messages in a conversation that come after the given message_id."""
-        logger.info(f"Deleting messages after {message_id} in conversation {conversation_id}")
-        # TODO: Implement Cosmos DB bulk delete
+        container = self._container(CONTAINER_MESSAGES)
+        if container is None:
+            logger.info(f"[degraded] delete_messages_after: {message_id}")
+            return
+        try:
+            anchor = await self.get_message(conversation_id, message_id)
+            if not anchor:
+                return
+            anchor_ts = anchor.get("created_at", "")
+            query = (
+                "SELECT c.id FROM c WHERE c.conversation_id = @cid "
+                "AND c.created_at > @ts"
+            )
+            params = [
+                {"name": "@cid", "value": conversation_id},
+                {"name": "@ts", "value": anchor_ts},
+            ]
+            ids: List[str] = []
+            async for item in container.query_items(
+                query=query, parameters=params, partition_key=conversation_id
+            ):
+                ids.append(item["id"])
+            for mid in ids:
+                try:
+                    await container.delete_item(item=mid, partition_key=conversation_id)
+                except CosmosHttpResponseError as e:
+                    logger.warning(f"delete_messages_after: could not delete {mid}: {e}")
+        except CosmosHttpResponseError as e:
+            logger.error(f"delete_messages_after failed: {e}")
 
     # ── Feedback operations ───────────────────────────────────────────────────
 
     async def save_bookmark(self, bookmark_data: dict):
-        """Upsert a bookmark record for an assistant message."""
-        logger.info(f"Bookmark saved: msg={bookmark_data.get('message_id')} conv={bookmark_data.get('conversation_id')}")
-        # TODO: Cosmos DB upsert into 'bookmarks' container keyed by message_id + user_id
+        container = self._container(CONTAINER_BOOKMARKS)
+        if container is None:
+            logger.info(f"[degraded] save_bookmark: {bookmark_data.get('message_id')}")
+            return
+        try:
+            user_id = bookmark_data.get("user_id", "anon")
+            msg_id = bookmark_data.get("message_id", "")
+            doc_id = f"{user_id}:{msg_id}"
+            doc = {**bookmark_data, "id": doc_id}
+            doc.setdefault("bookmarked_at", _now_iso())
+            await container.upsert_item(body=doc)
+        except CosmosHttpResponseError as e:
+            logger.error(f"save_bookmark failed: {e}")
+
+    async def save_feedback(self, feedback: dict):
+        """
+        Persist a feedback record (positive/negative + reason) for a message.
+        Called by chat.py background-logging path on low-confidence flags.
+        """
+        container = self._container(CONTAINER_FEEDBACK)
+        if container is None:
+            logger.info(f"[degraded] save_feedback: {feedback.get('message_id')}")
+            return
+        try:
+            msg_id = feedback.get("message_id", "")
+            doc = {**feedback, "id": f"{msg_id}:{_now_iso()}"}
+            doc.setdefault("created_at", _now_iso())
+            await container.upsert_item(body=doc)
+        except CosmosHttpResponseError as e:
+            logger.error(f"save_feedback failed: {e}")
 
     async def flag_message_for_review(self, message_id: str):
-        """Set needs_review=true and increment dislike_count on a message."""
-        logger.info(f"Flagging message for review: {message_id}")
-        # TODO: Cosmos DB patch: needs_review=true, dislike_count += 1
+        container = self._container(CONTAINER_MESSAGES)
+        if container is None:
+            logger.info(f"[degraded] flag_message_for_review: {message_id}")
+            return
+        try:
+            query = "SELECT TOP 1 c.id, c.conversation_id FROM c WHERE c.id = @id"
+            params = [{"name": "@id", "value": message_id}]
+            partition_key = None
+            async for item in container.query_items(
+                query=query, parameters=params, enable_cross_partition_query=True
+            ):
+                partition_key = item.get("conversation_id")
+                break
+            if not partition_key:
+                return
+            await container.patch_item(
+                item=message_id,
+                partition_key=partition_key,
+                patch_operations=[
+                    {"op": "set", "path": "/needs_review", "value": True},
+                    {"op": "incr", "path": "/dislike_count", "value": 1},
+                ],
+            )
+        except CosmosHttpResponseError as e:
+            logger.error(f"flag_message_for_review failed: {e}")
 
     async def get_message_dislike_count(self, message_id: str) -> int:
-        """Return the current dislike_count for a message."""
-        logger.info(f"Fetching dislike count for message: {message_id}")
-        # TODO: Implement real query
-        return 0
+        container = self._container(CONTAINER_MESSAGES)
+        if container is None:
+            return 0
+        try:
+            query = "SELECT TOP 1 c.dislike_count FROM c WHERE c.id = @id"
+            params = [{"name": "@id", "value": message_id}]
+            async for item in container.query_items(
+                query=query, parameters=params, enable_cross_partition_query=True
+            ):
+                return int(item.get("dislike_count") or 0)
+            return 0
+        except CosmosHttpResponseError as e:
+            logger.error(f"get_message_dislike_count failed: {e}")
+            return 0
 
     async def create_auto_review_task(self, message_id: str):
-        """Create an auto-flagged teacher review task (not student-initiated, no quota impact)."""
-        logger.info(f"Auto-review task created for message: {message_id}")
-        # TODO: Insert lightweight ticket into review_tasks container
+        container = self._container(CONTAINER_REVIEW_TASKS)
+        if container is None:
+            logger.info(f"[degraded] create_auto_review_task: {message_id}")
+            return
+        try:
+            doc = {
+                "id": message_id,
+                "message_id": message_id,
+                "status": "OPEN",
+                "auto_flagged": True,
+                "created_at": _now_iso(),
+            }
+            await container.upsert_item(body=doc)
+        except CosmosHttpResponseError as e:
+            logger.error(f"create_auto_review_task failed: {e}")
 
     async def add_to_cache_candidate(self, message_id: str):
-        """Add a liked answer to the candidate_for_cache queue."""
-        logger.info(f"Added message {message_id} to cache candidate queue")
-        # TODO: Cosmos DB insert / INCR in candidate_cache container
+        container = self._container(CONTAINER_CACHE_CANDIDATES)
+        if container is None:
+            logger.info(f"[degraded] add_to_cache_candidate: {message_id}")
+            return
+        try:
+            try:
+                await container.patch_item(
+                    item=message_id,
+                    partition_key=message_id,
+                    patch_operations=[{"op": "incr", "path": "/like_count", "value": 1}],
+                )
+            except CosmosResourceNotFoundError:
+                await container.create_item(
+                    body={
+                        "id": message_id,
+                        "message_id": message_id,
+                        "like_count": 1,
+                        "created_at": _now_iso(),
+                    }
+                )
+        except CosmosHttpResponseError as e:
+            logger.error(f"add_to_cache_candidate failed: {e}")
+
+    # ── Referrals ─────────────────────────────────────────────────────────────
+
+    async def upsert_referral_reward(self, reward: dict):
+        """Persist a referral reward record. `reward` should include id, user_id, code, days, granted_at."""
+        container = self._container(CONTAINER_REFERRALS)
+        if container is None:
+            logger.info(f"[degraded] upsert_referral_reward: {reward.get('id')}")
+            return
+        try:
+            reward.setdefault("granted_at", _now_iso())
+            await container.upsert_item(body=reward)
+        except CosmosHttpResponseError as e:
+            logger.error(f"upsert_referral_reward failed: {e}")
 
     # ── Usage / analytics ────────────────────────────────────────────────────
 
     async def log_query_usage(self, usage: dict):
-        """Log model usage and cost. Keys: timestamp, model, tokens_in, tokens_out, cost."""
-        logger.info(f"Query usage logged: {usage}")
-        # TODO: Write to 'usage_logs' container
+        container = self._container(CONTAINER_USAGE_LOGS)
+        if container is None:
+            logger.info(f"[degraded] log_query_usage: {usage}")
+            return
+        try:
+            ts = usage.get("timestamp") or _now_iso()
+            user_id = usage.get("user_id", "system")
+            doc = {**usage, "id": f"{user_id}:{ts}", "timestamp": ts}
+            await container.upsert_item(body=doc)
+        except CosmosHttpResponseError as e:
+            logger.error(f"log_query_usage failed: {e}")
 
     # ── Ticket operations ─────────────────────────────────────────────────────
 
     async def count_user_tickets_this_month(self, user_id: str) -> int:
-        return 0
+        container = self._container(CONTAINER_TICKETS)
+        if container is None:
+            return 0
+        try:
+            month_prefix = datetime.now(timezone.utc).strftime("%Y-%m")
+            query = (
+                "SELECT VALUE COUNT(1) FROM c WHERE c.user_id = @uid "
+                "AND STARTSWITH(c.created_at, @prefix)"
+            )
+            params = [
+                {"name": "@uid", "value": user_id},
+                {"name": "@prefix", "value": month_prefix},
+            ]
+            async for v in container.query_items(
+                query=query, parameters=params, partition_key=user_id
+            ):
+                return int(v or 0)
+            return 0
+        except CosmosHttpResponseError as e:
+            logger.error(f"count_user_tickets_this_month failed: {e}")
+            return 0
 
     async def create_ticket(self, ticket_data: dict):
-        logger.info(f"Ticket created in DB: {ticket_data.get('ticket_id')}")
+        container = self._container(CONTAINER_TICKETS)
+        if container is None:
+            logger.info(f"[degraded] create_ticket: {ticket_data.get('ticket_id')}")
+            return
+        try:
+            ticket_id = ticket_data.get("ticket_id") or ticket_data.get("id")
+            doc = {**ticket_data, "id": ticket_id}
+            doc.setdefault("status", "OPEN")
+            doc.setdefault("created_at", _now_iso())
+            await container.upsert_item(body=doc)
+        except CosmosHttpResponseError as e:
+            logger.error(f"create_ticket failed: {e}")
 
     async def get_tickets_by_user(self, user_id: str) -> list:
-        return []
+        container = self._container(CONTAINER_TICKETS)
+        if container is None:
+            return []
+        try:
+            query = "SELECT * FROM c WHERE c.user_id = @uid ORDER BY c.created_at DESC"
+            params = [{"name": "@uid", "value": user_id}]
+            results: List[dict] = []
+            async for item in container.query_items(
+                query=query, parameters=params, partition_key=user_id
+            ):
+                results.append(item)
+            return results
+        except CosmosHttpResponseError as e:
+            logger.error(f"get_tickets_by_user failed: {e}")
+            return []
 
     async def get_open_tickets(self) -> list:
-        return []
+        container = self._container(CONTAINER_TICKETS)
+        if container is None:
+            return []
+        try:
+            query = "SELECT * FROM c WHERE c.status = 'OPEN' ORDER BY c.created_at ASC"
+            results: List[dict] = []
+            async for item in container.query_items(
+                query=query, enable_cross_partition_query=True
+            ):
+                results.append(item)
+            return results
+        except CosmosHttpResponseError as e:
+            logger.error(f"get_open_tickets failed: {e}")
+            return []
 
     async def get_ticket(self, ticket_id: str) -> dict:
-        return {
+        container = self._container(CONTAINER_TICKETS)
+        default = {
             "ticket_id": ticket_id,
             "status": "OPEN",
-            "user_id": "mock_user",
-            "question": "stub question",
+            "user_id": "unknown",
+            "question": "",
             "board": "CBSE",
             "class_level": 10,
-            "subject": "Math",
+            "subject": "",
         }
+        if container is None:
+            return default
+        try:
+            query = "SELECT TOP 1 * FROM c WHERE c.id = @id OR c.ticket_id = @id"
+            params = [{"name": "@id", "value": ticket_id}]
+            async for item in container.query_items(
+                query=query, parameters=params, enable_cross_partition_query=True
+            ):
+                return item
+            return default
+        except CosmosHttpResponseError as e:
+            logger.error(f"get_ticket failed: {e}")
+            return default
 
     async def assign_ticket(self, ticket_id: str, teacher_id: str):
-        logger.info(f"Ticket {ticket_id} assigned to {teacher_id}")
+        ticket = await self.get_ticket(ticket_id)
+        user_id = ticket.get("user_id", "unknown")
+        container = self._container(CONTAINER_TICKETS)
+        if container is None:
+            logger.info(f"[degraded] assign_ticket: {ticket_id} -> {teacher_id}")
+            return
+        try:
+            await container.patch_item(
+                item=ticket_id,
+                partition_key=user_id,
+                patch_operations=[
+                    {"op": "set", "path": "/assigned_teacher_id", "value": teacher_id},
+                    {"op": "set", "path": "/status", "value": "ASSIGNED"},
+                    {"op": "set", "path": "/assigned_at", "value": _now_iso()},
+                ],
+            )
+        except CosmosHttpResponseError as e:
+            logger.error(f"assign_ticket failed: {e}")
 
     async def update_ticket_status(
         self,
@@ -150,4 +629,25 @@ class CosmosRepo:
         answer: str = None,
         teacher_id: str = None,
     ):
-        logger.info(f"Ticket {ticket_id} resolved by {teacher_id}")
+        ticket = await self.get_ticket(ticket_id)
+        user_id = ticket.get("user_id", "unknown")
+        container = self._container(CONTAINER_TICKETS)
+        if container is None:
+            logger.info(f"[degraded] update_ticket_status: {ticket_id} -> {status}")
+            return
+        try:
+            ops = [
+                {"op": "set", "path": "/status", "value": status},
+                {"op": "set", "path": "/updated_at", "value": _now_iso()},
+            ]
+            if answer is not None:
+                ops.append({"op": "set", "path": "/answer", "value": answer})
+            if teacher_id is not None:
+                ops.append({"op": "set", "path": "/resolved_by", "value": teacher_id})
+            await container.patch_item(
+                item=ticket_id,
+                partition_key=user_id,
+                patch_operations=ops,
+            )
+        except CosmosHttpResponseError as e:
+            logger.error(f"update_ticket_status failed: {e}")

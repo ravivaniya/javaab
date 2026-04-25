@@ -68,6 +68,10 @@ class Settings(BaseSettings):
     AUTH_MODE: str = "mock"
     MOCK_OTP: str = "123456"
 
+    # Razorpay (optional — if unset, payment service returns a stub order id)
+    RAZORPAY_KEY_ID: str = ""
+    RAZORPAY_KEY_SECRET: str = ""
+
     # QA safety cap — remove or raise before public launch
     DAILY_GLOBAL_CAP: int = 500
 
