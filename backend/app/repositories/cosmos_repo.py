@@ -23,6 +23,8 @@ CONTAINER_CACHE_CANDIDATES = "cache_candidates"
 CONTAINER_REVIEW_TASKS = "review_tasks"
 CONTAINER_FEEDBACK = "feedback"
 CONTAINER_REFERRALS = "referrals"
+CONTAINER_PAPERS = "papers"
+CONTAINER_WORKSHEETS = "worksheets"
 
 
 def _now_iso() -> str:
@@ -75,6 +77,8 @@ class CosmosRepo:
                 CONTAINER_REVIEW_TASKS,
                 CONTAINER_FEEDBACK,
                 CONTAINER_REFERRALS,
+                CONTAINER_PAPERS,
+                CONTAINER_WORKSHEETS,
             ):
                 self._containers[name] = self._db.get_container_client(name)
             self._available = True
@@ -87,6 +91,25 @@ class CosmosRepo:
         if not self._available:
             return None
         return self._containers.get(name)
+
+    async def provision_new_containers(self) -> None:
+        """Create papers and worksheets containers if they don't exist yet. Call once at startup."""
+        self._ensure_clients()
+        if not self._available or not self._db:
+            return
+        for name, partition_key in (
+            (CONTAINER_PAPERS, "/teacher_id"),
+            (CONTAINER_WORKSHEETS, "/teacher_id"),
+        ):
+            try:
+                container = await self._db.create_container_if_not_exists(
+                    id=name,
+                    partition_key={"paths": [partition_key], "kind": "Hash"},
+                )
+                self._containers[name] = container
+                logger.info(f"Cosmos container ready: {name}")
+            except Exception as e:
+                logger.error(f"Failed to provision container '{name}': {e}")
 
     # ── User operations ──────────────────────────────────────────────────────
 
@@ -626,8 +649,8 @@ class CosmosRepo:
         self,
         ticket_id: str,
         status: str,
-        answer: str = None,
-        teacher_id: str = None,
+        answer: Optional[str] = None,
+        teacher_id: Optional[str] = None,
     ):
         ticket = await self.get_ticket(ticket_id)
         user_id = ticket.get("user_id", "unknown")
@@ -651,3 +674,177 @@ class CosmosRepo:
             )
         except CosmosHttpResponseError as e:
             logger.error(f"update_ticket_status failed: {e}")
+
+    # ── Papers ────────────────────────────────────────────────────────────────
+
+    async def create_paper(self, paper: dict) -> None:
+        """Persist a new paper document. Partition key: teacher_id."""
+        container = self._container(CONTAINER_PAPERS)
+        if container is None:
+            logger.info(f"[degraded] create_paper: {paper.get('id')}")
+            return
+        try:
+            await container.upsert_item(body=paper)
+        except CosmosHttpResponseError as e:
+            logger.error(f"create_paper failed: {e}")
+
+    async def get_paper(self, paper_id: str, teacher_id: str) -> dict | None:
+        container = self._container(CONTAINER_PAPERS)
+        if container is None:
+            return None
+        try:
+            item = await container.read_item(item=paper_id, partition_key=teacher_id)
+            return item if not item.get("deleted") else None
+        except CosmosResourceNotFoundError:
+            return None
+        except CosmosHttpResponseError as e:
+            logger.error(f"get_paper failed: {e}")
+            return None
+
+    async def list_papers(self, teacher_id: str) -> list[dict]:
+        container = self._container(CONTAINER_PAPERS)
+        if container is None:
+            return []
+        try:
+            query = (
+                "SELECT * FROM c WHERE c.teacher_id = @tid AND (NOT IS_DEFINED(c.deleted) OR c.deleted = false) "
+                "ORDER BY c.created_at DESC"
+            )
+            items = []
+            async for item in container.query_items(
+                query=query,
+                parameters=[{"name": "@tid", "value": teacher_id}],
+            ):
+                items.append(item)
+            return items
+        except CosmosHttpResponseError as e:
+            logger.error(f"list_papers failed: {e}")
+            return []
+
+    async def update_paper_status(
+        self,
+        paper_id: str,
+        teacher_id: str,
+        status: str,
+        variants: list | None = None,
+        generation_stats: dict | None = None,
+    ) -> None:
+        container = self._container(CONTAINER_PAPERS)
+        if container is None:
+            logger.info(f"[degraded] update_paper_status: {paper_id} -> {status}")
+            return
+        try:
+            ops = [
+                {"op": "set", "path": "/status", "value": status},
+                {"op": "set", "path": "/updated_at", "value": _now_iso()},
+            ]
+            if variants is not None:
+                ops.append({"op": "set", "path": "/variants", "value": variants})
+            if generation_stats is not None:
+                ops.append({"op": "set", "path": "/generation_stats", "value": generation_stats})
+            await container.patch_item(
+                item=paper_id,
+                partition_key=teacher_id,
+                patch_operations=ops,
+            )
+        except CosmosHttpResponseError as e:
+            logger.error(f"update_paper_status failed: {e}")
+
+    async def soft_delete_paper(self, paper_id: str, teacher_id: str) -> None:
+        container = self._container(CONTAINER_PAPERS)
+        if container is None:
+            return
+        try:
+            await container.patch_item(
+                item=paper_id,
+                partition_key=teacher_id,
+                patch_operations=[{"op": "set", "path": "/deleted", "value": True}],
+            )
+        except CosmosHttpResponseError as e:
+            logger.error(f"soft_delete_paper failed: {e}")
+
+    # ── Worksheets ────────────────────────────────────────────────────────────
+
+    async def create_worksheet(self, ws: dict) -> None:
+        """Persist a new worksheet document. Partition key: teacher_id."""
+        container = self._container(CONTAINER_WORKSHEETS)
+        if container is None:
+            logger.info(f"[degraded] create_worksheet: {ws.get('id')}")
+            return
+        try:
+            await container.upsert_item(body=ws)
+        except CosmosHttpResponseError as e:
+            logger.error(f"create_worksheet failed: {e}")
+
+    async def get_worksheet(self, ws_id: str, teacher_id: str) -> dict | None:
+        container = self._container(CONTAINER_WORKSHEETS)
+        if container is None:
+            return None
+        try:
+            item = await container.read_item(item=ws_id, partition_key=teacher_id)
+            return item if not item.get("deleted") else None
+        except CosmosResourceNotFoundError:
+            return None
+        except CosmosHttpResponseError as e:
+            logger.error(f"get_worksheet failed: {e}")
+            return None
+
+    async def list_worksheets(self, teacher_id: str) -> list[dict]:
+        container = self._container(CONTAINER_WORKSHEETS)
+        if container is None:
+            return []
+        try:
+            query = (
+                "SELECT * FROM c WHERE c.teacher_id = @tid AND (NOT IS_DEFINED(c.deleted) OR c.deleted = false) "
+                "ORDER BY c.created_at DESC"
+            )
+            items = []
+            async for item in container.query_items(
+                query=query,
+                parameters=[{"name": "@tid", "value": teacher_id}],
+            ):
+                items.append(item)
+            return items
+        except CosmosHttpResponseError as e:
+            logger.error(f"list_worksheets failed: {e}")
+            return []
+
+    async def update_worksheet_status(
+        self,
+        ws_id: str,
+        teacher_id: str,
+        status: str,
+        data: dict | None = None,
+    ) -> None:
+        container = self._container(CONTAINER_WORKSHEETS)
+        if container is None:
+            logger.info(f"[degraded] update_worksheet_status: {ws_id} -> {status}")
+            return
+        try:
+            ops = [
+                {"op": "set", "path": "/status", "value": status},
+                {"op": "set", "path": "/updated_at", "value": _now_iso()},
+            ]
+            if data:
+                for key, value in data.items():
+                    ops.append({"op": "set", "path": f"/{key}", "value": value})
+            await container.patch_item(
+                item=ws_id,
+                partition_key=teacher_id,
+                patch_operations=ops,
+            )
+        except CosmosHttpResponseError as e:
+            logger.error(f"update_worksheet_status failed: {e}")
+
+    async def soft_delete_worksheet(self, ws_id: str, teacher_id: str) -> None:
+        container = self._container(CONTAINER_WORKSHEETS)
+        if container is None:
+            return
+        try:
+            await container.patch_item(
+                item=ws_id,
+                partition_key=teacher_id,
+                patch_operations=[{"op": "set", "path": "/deleted", "value": True}],
+            )
+        except CosmosHttpResponseError as e:
+            logger.error(f"soft_delete_worksheet failed: {e}")

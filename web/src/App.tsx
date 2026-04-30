@@ -20,6 +20,12 @@ import TeacherDashboard from "./pages/admin/TeacherDashboard";
 import TeacherLayout from "./pages/admin/TeacherLayout";
 import TeacherTicketDetail from "./pages/admin/TeacherTicketDetail";
 import TeacherTickets from "./pages/admin/TeacherTickets";
+import PapersList from "./pages/admin/Papers/PapersList";
+import CreatePaper from "./pages/admin/Papers/CreatePaper";
+import PaperDetail from "./pages/admin/Papers/PaperDetail";
+import WorksheetsList from "./pages/admin/Worksheets/WorksheetsList";
+import CreateWorksheet from "./pages/admin/Worksheets/CreateWorksheet";
+import WorksheetDetail from "./pages/admin/Worksheets/WorksheetDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -64,6 +70,12 @@ const App = () => (
               <Route path="tickets" element={<TeacherTickets />} />
               <Route path="tickets/:id" element={<TeacherTicketDetail />} />
               <Route path="analytics" element={<TeacherAnalytics />} />
+              <Route path="papers" element={<PapersList />} />
+              <Route path="papers/new" element={<CreatePaper />} />
+              <Route path="papers/:id" element={<PaperDetail />} />
+              <Route path="worksheets" element={<WorksheetsList />} />
+              <Route path="worksheets/new" element={<CreateWorksheet />} />
+              <Route path="worksheets/:id" element={<WorksheetDetail />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

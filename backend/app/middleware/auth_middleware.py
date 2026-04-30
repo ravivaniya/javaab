@@ -66,4 +66,5 @@ class AuthMiddleware(BaseHTTPMiddleware):
         request.state.user_id = payload.get("sub")
         request.state.user_tier = payload.get("tier", "Free")
         request.state.user_phone = payload.get("phone")
+        request.state.user_role = payload.get("role", "student")
         return await call_next(request)

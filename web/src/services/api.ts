@@ -1,4 +1,6 @@
 import { getToken, clearToken, clearUser } from "@/lib/auth";
+import type { PaperConfig, GeneratedPaper } from "@/types/paper";
+import type { WorksheetConfig, GeneratedWorksheet } from "@/types/worksheet";
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -279,6 +281,80 @@ export const ApiService = {
       method: "PATCH",
       body: JSON.stringify({ user_id: userId, title }),
     });
+  },
+
+  // ── Papers ────────────────────────────────────────────────────────────────
+
+  async generatePaper(config: PaperConfig): Promise<{ paper_id: string; status: string }> {
+    return fetchApi("/admin/papers/generate", { method: "POST", body: JSON.stringify(config) });
+  },
+
+  async listPapers(): Promise<{ papers: GeneratedPaper[] }> {
+    return fetchApi("/admin/papers");
+  },
+
+  async getPaper(id: string): Promise<GeneratedPaper> {
+    return fetchApi(`/admin/papers/${id}`);
+  },
+
+  async downloadPaper(id: string, variant: string, type: string): Promise<void> {
+    const headers = new Headers({ "Content-Type": "application/json" });
+    attachAuth(headers, `/admin/papers/${id}/download`);
+    const response = await fetch(
+      `${API_BASE_URL}/admin/papers/${id}/download?variant=${encodeURIComponent(variant)}&type=${encodeURIComponent(type)}`,
+      { headers }
+    );
+    if (!response.ok) throw new Error("Download failed");
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const cd = response.headers.get("content-disposition") ?? "";
+    const match = cd.match(/filename="([^"]+)"/);
+    a.href = url;
+    a.download = match ? match[1] : `paper_${type}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  async deletePaper(id: string): Promise<{ status: string }> {
+    return fetchApi(`/admin/papers/${id}`, { method: "DELETE" });
+  },
+
+  // ── Worksheets ────────────────────────────────────────────────────────────
+
+  async generateWorksheet(config: WorksheetConfig): Promise<{ worksheet_id: string; status: string }> {
+    return fetchApi("/admin/worksheets/generate", { method: "POST", body: JSON.stringify(config) });
+  },
+
+  async listWorksheets(): Promise<{ worksheets: GeneratedWorksheet[] }> {
+    return fetchApi("/admin/worksheets");
+  },
+
+  async getWorksheet(id: string): Promise<GeneratedWorksheet> {
+    return fetchApi(`/admin/worksheets/${id}`);
+  },
+
+  async downloadWorksheet(id: string, type: string): Promise<void> {
+    const headers = new Headers({ "Content-Type": "application/json" });
+    attachAuth(headers, `/admin/worksheets/${id}/download`);
+    const response = await fetch(
+      `${API_BASE_URL}/admin/worksheets/${id}/download?type=${encodeURIComponent(type)}`,
+      { headers }
+    );
+    if (!response.ok) throw new Error("Download failed");
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const cd = response.headers.get("content-disposition") ?? "";
+    const match = cd.match(/filename="([^"]+)"/);
+    a.href = url;
+    a.download = match ? match[1] : `worksheet_${type}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  async deleteWorksheet(id: string): Promise<{ status: string }> {
+    return fetchApi(`/admin/worksheets/${id}`, { method: "DELETE" });
   },
 
   // ── Util: client-side image compression ──────────────────────────────────

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import logging
 
-from app.routes import chat, auth, tickets, admin, student
+from app.routes import chat, auth, tickets, admin, student, papers, worksheets
 from app.middleware.auth_middleware import AuthMiddleware
 from app.middleware.rate_limiter import RateLimiterMiddleware
 from app.config import get_settings
@@ -62,6 +62,8 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(tickets.router, prefix="/tickets", tags=["tickets"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(student.router, prefix="/student", tags=["student"])
+app.include_router(papers.router, prefix="/admin/papers", tags=["papers"])
+app.include_router(worksheets.router, prefix="/admin/worksheets", tags=["worksheets"])
 
 @app.get("/health", tags=["system"])
 async def health_check():

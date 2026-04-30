@@ -10,14 +10,15 @@
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2026-04-21
+**Document Version**: 1.1
+**Last Updated**: 2026-04-30
 **Domain**: tryjavaab.com (Cloudflare) → app.tryjavaab.com (Web App)
 
 **Current Implementation Snapshot**
 
-- Web app: Vite + React SPA with React Router routes for `/`, `/login`, `/onboarding`, `/chat`, `/tickets`, `/tickets/:id`, `/subscribe`, `/refer`, `/settings`, `/settings/subscription`, and `/admin/teacher/*`.
-- Backend: FastAPI mounted routes for `/health`, `/auth/*`, `/chat/*`, `/subjects/*`, `/tickets/*`, `/admin/*`, and `/student/profile`.
+- Web app: Vite + React SPA with React Router routes for `/`, `/login`, `/onboarding`, `/chat`, `/tickets`, `/tickets/:id`, `/subscribe`, `/refer`, `/settings`, `/settings/subscription`, `/admin/teacher/*`, `/admin/teacher/papers/*`, and `/admin/teacher/worksheets/*`.
+- Backend: FastAPI mounted routes for `/health`, `/auth/*`, `/chat/*`, `/subjects/*`, `/tickets/*`, `/admin/*`, `/admin/papers/*`, `/admin/worksheets/*`, and `/student/profile`.
+- Teacher portal includes Question Paper Generator (multi-variant, HTML export) and DPP/Worksheet Builder, both live under the Custom Plan feature set.
 - Subject browser is a future/backlog UI. The backend subject endpoints exist so the frontend can add this screen later without another API contract change.
 
 ---
@@ -1552,6 +1553,37 @@ AI GENERATES:
 
 COST TO US: ~₹3-5 per paper generation (GPT-4.1 for quality)
 TIP: Generate Set A, B, C variants to prevent cheating
+```
+
+### Custom Plan Pricing — Token-Based vs Per-Student
+
+```
+DECISION: Keep per-student formula as the primary pricing model.
+          Add token-based ONLY as an optional "pay-as-you-go" overage tier
+          for enterprises that prefer consumption billing.
+
+WHY PER-STUDENT WINS for B2B:
+  ✅ Predictable monthly invoice — finance teams prefer fixed commitments
+  ✅ Scales simply: add 10 students → ₹290 more, no surprises
+  ✅ Aligned with how schools think ("we have 150 students")
+  ✅ Already proven: Byju's, Toppr, and most Indian EdTech sell per-seat
+
+WHY TOKEN-BASED FALLS SHORT for coaching/schools:
+  ❌ School principals don't understand "tokens"
+  ❌ Unpredictable bills create budget anxiety, killing renewals
+  ❌ Requires real-time token tracking dashboard (extra eng effort)
+  ❌ One teacher generating 50 papers in exam season = spike invoice
+
+WHERE TOKEN BILLING MAKES SENSE:
+  ✅ Question Paper Generator overages beyond monthly cap
+     (e.g., base plan = 20 papers/month; extra = ₹5/paper)
+  ✅ Javaab API (developer platform, future) — B2B devs understand tokens
+  ✅ Large enterprise custom contracts (negotiated, not self-serve)
+
+RECOMMENDATION:
+  Custom Plan = Per-student base fee + add-ons (current formula ✅)
+  QPG/LPB usage cap = "N papers/month included; ₹5 per extra paper"
+  This is familiar (like Zomato Pro credits) without token confusion.
 ```
 
 ### Lesson Plan Builder

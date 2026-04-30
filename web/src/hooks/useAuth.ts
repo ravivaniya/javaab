@@ -43,8 +43,23 @@ export function useAuth() {
     if (!verify?.access_token) throw new Error("Invalid OTP");
     setToken(verify.access_token);
 
+    // Decode JWT payload (no signature check — just extracting claims for UX).
+    let jwtRole: string | undefined;
+    try {
+      const parts = verify.access_token.split(".");
+      if (parts.length === 3) {
+        const decoded = JSON.parse(atob(parts[1]));
+        jwtRole = decoded.role;
+      }
+    } catch { /* non-fatal */ }
+
     // OTP confirmed — now build/refresh the local user record.
     const u = await mockVerifyOtp(phone, code);
+    const validRole = (["student", "teacher", "admin"] as const).find(r => r === jwtRole);
+    if (validRole) {
+      u.role = validRole;
+      setUser(u); // re-persist so localStorage has the role for RequireAuth
+    }
     setUserState(u);
 
     // Mirror the user into the backend so /auth/profile etc. work.

@@ -13,8 +13,16 @@ from app.services.referral_service import ReferralService
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# In-memory dictionary for mock local development users
-MOCK_USERS: Dict[str, Dict[str, Any]] = {}
+# In-memory dictionary for mock local development users.
+# Seed a teacher account so you can test teacher-only routes locally.
+MOCK_USERS: Dict[str, Dict[str, Any]] = {
+    "9999999999": {
+        "id": "teacher_dev",
+        "phone": "9999999999",
+        "tier": "pro",
+        "role": "teacher",
+    },
+}
 
 cosmos_repo = CosmosRepo()
 referral_service = ReferralService()
@@ -36,15 +44,16 @@ class RegisterRequest(BaseModel):
     referral_code: Optional[str] = None
 
 
-def create_jwt(user_id: str, phone: str, tier: str, settings: Settings) -> str:
+def create_jwt(user_id: str, phone: str, tier: str, settings: Settings, role: str = "student") -> str:
     """
     Generate a JWT token for the authenticated user.
     """
-    expiration = datetime.utcnow() + timedelta(hours=settings.JWT_EXPIRY_HOURS)
+    expiration = datetime.now(timezone.utc) + timedelta(hours=settings.JWT_EXPIRY_HOURS)
     payload = {
         "sub": user_id,
         "phone": phone,
         "tier": tier,
+        "role": role,
         "exp": expiration
     }
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
@@ -123,7 +132,7 @@ async def verify(body: VerifyRequest, settings: Settings = Depends(get_settings)
                 "monthly_queries_used": 0,
             }
         )
-        token = create_jwt(user["id"], user["phone"], user["tier"], settings)
+        token = create_jwt(user["id"], user["phone"], user["tier"], settings, role=user.get("role", "student"))
         return {"access_token": token, "token_type": "bearer", "token": token}
 
     raise HTTPException(

@@ -2,7 +2,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Gift,
+  LayoutDashboard,
   LogOut,
+  MessageCircle,
   Settings,
   Sparkles,
   Ticket,
@@ -73,8 +75,20 @@ export function AppHeader({ showBack = false, leftSlot, rightSlot }: Props) {
           )}
         </div>
 
-        {/* Tickets nav (single remaining secondary route) */}
+        {/* Desktop nav links */}
         <nav className="hidden items-center gap-1 md:flex">
+          <Link
+            to="/chat"
+            className={cn(
+              "flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-sm font-medium transition-colors",
+              pathname === "/chat"
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            <MessageCircle className="h-4 w-4" />
+            Chat
+          </Link>
           <Link
             to="/tickets"
             className={cn(
@@ -87,6 +101,20 @@ export function AppHeader({ showBack = false, leftSlot, rightSlot }: Props) {
             <Ticket className="h-4 w-4" />
             Tickets
           </Link>
+          {user?.role === "teacher" && (
+            <Link
+              to="/admin/teacher/dashboard"
+              className={cn(
+                "flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-sm font-medium transition-colors",
+                pathname.startsWith("/admin/teacher")
+                  ? "bg-[#FC8019]/10 text-[#FC8019] font-bold"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              Teacher
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
@@ -140,6 +168,13 @@ export function AppHeader({ showBack = false, leftSlot, rightSlot }: Props) {
                   <Ticket className="h-4 w-4" /> Tickets
                 </Link>
               </DropdownMenuItem>
+              {user?.role === "teacher" && (
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/teacher/dashboard" className="cursor-pointer">
+                    <LayoutDashboard className="h-4 w-4" /> Teacher Portal
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem asChild>
                 <Link to="/refer" className="cursor-pointer">
                   <Gift className="h-4 w-4" /> Refer &amp; earn
