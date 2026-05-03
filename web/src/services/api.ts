@@ -2,7 +2,12 @@ import { getToken, clearToken, clearUser } from "@/lib/auth";
 import type { PaperConfig, GeneratedPaper } from "@/types/paper";
 import type { WorksheetConfig, GeneratedWorksheet } from "@/types/worksheet";
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const rawApiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Force HTTPS in production to prevent mixed-content blocks
+export const API_BASE_URL =
+  location.protocol === "https:" && rawApiUrl.startsWith("http:")
+    ? rawApiUrl.replace("http://", "https://")
+    : rawApiUrl;
 
 interface FetchOptions extends RequestInit {
   requiresAuth?: boolean;
