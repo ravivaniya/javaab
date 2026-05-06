@@ -37,6 +37,7 @@ const USER_KEY = "javaab.user";
 const PENDING_PLAN_KEY = "javaab.pendingPlan";
 const KNOWN_PHONES_KEY = "javaab.knownPhones";
 const TOKEN_KEY = "javaab.token";
+const profileCacheKey = (phone: string) => `javaab.profile.${phone}`;
 
 /** Read the stored JWT (or null). */
 export function getToken(): string | null {
@@ -75,6 +76,26 @@ export function getUser(): JavaabUser | null {
 export function setUser(user: JavaabUser): void {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
   window.dispatchEvent(new Event("javaab:auth"));
+}
+
+/**
+ * Save a full profile snapshot keyed by phone.
+ * Survives logout — allows profile restoration on re-login without Cosmos DB.
+ */
+export function saveProfileCache(user: JavaabUser): void {
+  try {
+    localStorage.setItem(profileCacheKey(user.phone), JSON.stringify(user));
+  } catch { /* noop */ }
+}
+
+/** Retrieve the cached profile for a phone (or null if none). */
+export function getSavedProfile(phone: string): Partial<JavaabUser> | null {
+  try {
+    const raw = localStorage.getItem(profileCacheKey(phone));
+    return raw ? (JSON.parse(raw) as Partial<JavaabUser>) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Clear session. */

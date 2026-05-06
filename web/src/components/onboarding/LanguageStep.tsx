@@ -23,11 +23,9 @@ export function LanguageStep({ value, onChange }: LanguageStepProps) {
     <div className="space-y-6">
       <header className="space-y-2">
         <h2 className="font-display text-3xl font-black tracking-tight sm:text-4xl">
-          आप किस भाषा में पढ़ना चाहते हैं?
+          Which language do you want to study in?
         </h2>
-        <p className="text-muted-foreground">
-          Which language do you want to study in? (Pick one or more.)
-        </p>
+        <p className="text-muted-foreground">Pick one or more.</p>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-3">

@@ -123,15 +123,18 @@ async def verify(body: VerifyRequest, settings: Settings = Depends(get_settings)
             }
 
         user = MOCK_USERS[body.phone]
-        # Mirror the mock user into Cosmos so the rest of the API can read it.
-        await cosmos_repo.upsert_user(
-            {
-                "id": user["id"],
-                "phone": body.phone,
-                "tier": user.get("tier", "free"),
-                "monthly_queries_used": 0,
-            }
-        )
+        # Only create the Cosmos doc if this user doesn't already have one;
+        # never overwrite an existing profile on re-login.
+        existing = await cosmos_repo.get_user(user["id"])
+        if not existing.get("phone"):
+            await cosmos_repo.upsert_user(
+                {
+                    "id": user["id"],
+                    "phone": body.phone,
+                    "tier": user.get("tier", "free"),
+                    "monthly_queries_used": 0,
+                }
+            )
         token = create_jwt(user["id"], user["phone"], user["tier"], settings, role=user.get("role", "student"))
         return {"access_token": token, "token_type": "bearer", "token": token}
 
@@ -144,16 +147,31 @@ async def verify(body: VerifyRequest, settings: Settings = Depends(get_settings)
 @router.post("/register")
 async def register(body: RegisterRequest, settings: Settings = Depends(get_settings)):
     """
-    Register a new student and persist their profile.
-    Issues a JWT immediately so the client can call authenticated endpoints.
+    Register a new student or re-issue a JWT for a returning one.
+    Existing profiles are never overwritten — only new users get a fresh document.
     """
     if not body.phone or len(body.phone) < 6:
         raise HTTPException(status_code=400, detail="Valid phone number required.")
 
     user_id = f"user_{body.phone}"
+
+    # Check if the user already exists in Cosmos DB.
+    # get_user() returns a default dict without "phone" when not found.
+    existing = await cosmos_repo.get_user(user_id)
+    if existing.get("phone"):
+        # Returning user — re-issue JWT using their stored tier; never overwrite profile.
+        token = create_jwt(user_id, body.phone, existing.get("tier", "Free"), settings)
+        return {
+            "status": "registered",
+            "user_id": user_id,
+            "referral_code": existing.get("referral_code", _generate_referral_code(body.phone)),
+            "access_token": token,
+            "token_type": "bearer",
+        }
+
+    # New user — create their document.
     referral_code = _generate_referral_code(body.phone)
     now = datetime.now(timezone.utc).isoformat()
-
     user_doc = {
         "id": user_id,
         "phone": body.phone,

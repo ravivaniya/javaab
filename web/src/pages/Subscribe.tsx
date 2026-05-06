@@ -30,7 +30,7 @@ const FAQS = [
 ];
 
 export default function Subscribe() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
@@ -66,14 +66,7 @@ export default function Subscribe() {
   const handleSuccess = (plan: Plan) => {
     setOpen(false);
     clearPendingPlan();
-    // Update mocked user plan
-    const userJson = localStorage.getItem("javaab.user");
-    if (userJson) {
-      const u = JSON.parse(userJson);
-      u.plan = plan;
-      localStorage.setItem("javaab.user", JSON.stringify(u));
-      window.dispatchEvent(new Event("javaab:auth"));
-    }
+    updateUser({ plan });
     toast({
       title: "Subscription active 🎉",
       description: `You're now on Javaab ${plan === "plus" ? "Plus" : "Pro"}.`,

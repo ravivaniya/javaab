@@ -14,10 +14,17 @@ interface FetchOptions extends RequestInit {
 }
 
 /** Endpoints that must NEVER carry an Authorization header. */
-const PUBLIC_ENDPOINTS = ["/auth/login", "/auth/verify", "/auth/register", "/health"];
+const PUBLIC_ENDPOINTS = [
+  "/auth/login",
+  "/auth/verify",
+  "/auth/register",
+  "/health",
+];
 
 function isPublicEndpoint(endpoint: string): boolean {
-  return PUBLIC_ENDPOINTS.some((p) => endpoint === p || endpoint.startsWith(`${p}?`));
+  return PUBLIC_ENDPOINTS.some(
+    (p) => endpoint === p || endpoint.startsWith(`${p}?`),
+  );
 }
 
 /** Attach the stored JWT (if any) to a Headers object. */
@@ -36,7 +43,10 @@ function handleUnauthorized(): void {
 }
 
 /** Base fetch wrapper with error handling. */
-async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
+async function fetchApi<T>(
+  endpoint: string,
+  options: FetchOptions = {},
+): Promise<T> {
   const headers = new Headers(options.headers);
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
@@ -79,7 +89,13 @@ async function consumeSseStream(
   callbacks: {
     onChunk?: (content: string) => void;
     onConversationId?: (id: string) => void;
-    onMetadata?: (model: string, confidence: string, fromCache: boolean, conversationId?: string, confidenceScore?: number) => void;
+    onMetadata?: (
+      model: string,
+      confidence: string,
+      fromCache: boolean,
+      conversationId?: string,
+      confidenceScore?: number,
+    ) => void;
     onSources?: (sources: Record<string, unknown>[]) => void;
     onDone?: () => void;
     onError?: (err: unknown) => void;
@@ -114,7 +130,13 @@ async function consumeSseStream(
             } else if (data.type === "conversation_id") {
               callbacks.onConversationId?.(data.id);
             } else if (data.type === "metadata") {
-              callbacks.onMetadata?.(data.model, data.confidence, data.from_cache ?? false, data.conversation_id, data.confidence_score);
+              callbacks.onMetadata?.(
+                data.model,
+                data.confidence,
+                data.from_cache ?? false,
+                data.conversation_id,
+                data.confidence_score,
+              );
             } else if (data.type === "sources") {
               callbacks.onSources?.(data.sources);
             } else if (data.type === "done") {
@@ -134,7 +156,14 @@ async function consumeSseStream(
 export const ApiService = {
   // ── Auth / Profile ──────────────────────────────────────────────────────
 
-  async registerUser(data: { phone: string; name?: string; class_level?: number; board?: string; language?: string; referral_code?: string }) {
+  async registerUser(data: {
+    phone: string;
+    name?: string;
+    class_level?: number;
+    board?: string;
+    language?: string;
+    referral_code?: string;
+  }) {
     return fetchApi<{
       status: string;
       user_id: string;
@@ -152,14 +181,25 @@ export const ApiService = {
   },
 
   async verifyOtpRemote(phone: string, otp: string) {
-    return fetchApi<{ access_token: string; token_type: string; token: string }>("/auth/verify", {
+    return fetchApi<{
+      access_token: string;
+      token_type: string;
+      token: string;
+    }>("/auth/verify", {
       method: "POST",
       body: JSON.stringify({ phone, otp }),
     });
   },
 
   async updateProfile(data: Record<string, unknown>) {
-    return fetchApi("/student/profile", { method: "POST", body: JSON.stringify(data) });
+    return fetchApi("/student/profile", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  async getProfile(): Promise<{ user: Record<string, unknown> }> {
+    return fetchApi("/auth/profile", { method: "GET" });
   },
 
   // ── Subjects ─────────────────────────────────────────────────────────────
@@ -185,7 +225,13 @@ export const ApiService = {
     callbacks: {
       onChunk: (content: string) => void;
       onConversationId?: (id: string) => void;
-      onMetadata: (model: string, confidence: string, fromCache?: boolean, conversationId?: string, confidenceScore?: number) => void;
+      onMetadata: (
+        model: string,
+        confidence: string,
+        fromCache?: boolean,
+        conversationId?: string,
+        confidenceScore?: number,
+      ) => void;
       onSources: (sources: Record<string, unknown>[]) => void;
       onDone: () => void;
       onError: (err: unknown) => void;
@@ -209,8 +255,11 @@ export const ApiService = {
         }
         if (response.status === 429 || response.status === 503) {
           const data = await response.json().catch(() => ({}));
-          const err = new Error(data.detail?.message || data.detail || "Request limit reached");
-          err.name = response.status === 429 ? "RateLimitError" : "CapacityError";
+          const err = new Error(
+            data.detail?.message || data.detail || "Request limit reached",
+          );
+          err.name =
+            response.status === 429 ? "RateLimitError" : "CapacityError";
           throw err;
         }
         throw new Error(`Chat API failed: ${response.status}`);
@@ -230,7 +279,11 @@ export const ApiService = {
     body: { user_id: string; content: string },
     callbacks: {
       onChunk: (content: string) => void;
-      onMetadata: (model: string, confidence: string, fromCache?: boolean) => void;
+      onMetadata: (
+        model: string,
+        confidence: string,
+        fromCache?: boolean,
+      ) => void;
       onSources: (sources: Record<string, unknown>[]) => void;
       onDone: () => void;
       onError: (err: unknown) => void;
@@ -256,7 +309,9 @@ export const ApiService = {
           throw err;
         }
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.detail || `Edit message failed: ${response.status}`);
+        throw new Error(
+          data.detail || `Edit message failed: ${response.status}`,
+        );
       }
 
       await consumeSseStream(response, callbacks);
@@ -267,7 +322,12 @@ export const ApiService = {
 
   // ── Chat: bookmark message ────────────────────────────────────────────────
 
-  async bookmarkMessage(messageId: string, conversationId: string, userId: string, content?: string) {
+  async bookmarkMessage(
+    messageId: string,
+    conversationId: string,
+    userId: string,
+    content?: string,
+  ) {
     return fetchApi("/chat/bookmark", {
       method: "POST",
       body: JSON.stringify({
@@ -281,7 +341,11 @@ export const ApiService = {
 
   // ── Chat: rename conversation ─────────────────────────────────────────────
 
-  async updateConversationTitle(conversationId: string, userId: string, title: string) {
+  async updateConversationTitle(
+    conversationId: string,
+    userId: string,
+    title: string,
+  ) {
     return fetchApi(`/chat/${conversationId}/title`, {
       method: "PATCH",
       body: JSON.stringify({ user_id: userId, title }),
@@ -290,8 +354,13 @@ export const ApiService = {
 
   // ── Papers ────────────────────────────────────────────────────────────────
 
-  async generatePaper(config: PaperConfig): Promise<{ paper_id: string; status: string }> {
-    return fetchApi("/admin/papers/generate", { method: "POST", body: JSON.stringify(config) });
+  async generatePaper(
+    config: PaperConfig,
+  ): Promise<{ paper_id: string; status: string }> {
+    return fetchApi("/admin/papers/generate", {
+      method: "POST",
+      body: JSON.stringify(config),
+    });
   },
 
   async listPapers(): Promise<{ papers: GeneratedPaper[] }> {
@@ -302,12 +371,16 @@ export const ApiService = {
     return fetchApi(`/admin/papers/${id}`);
   },
 
-  async downloadPaper(id: string, variant: string, type: string): Promise<void> {
+  async downloadPaper(
+    id: string,
+    variant: string,
+    type: string,
+  ): Promise<void> {
     const headers = new Headers({ "Content-Type": "application/json" });
     attachAuth(headers, `/admin/papers/${id}/download`);
     const response = await fetch(
       `${API_BASE_URL}/admin/papers/${id}/download?variant=${encodeURIComponent(variant)}&type=${encodeURIComponent(type)}`,
-      { headers }
+      { headers },
     );
     if (!response.ok) throw new Error("Download failed");
     const blob = await response.blob();
@@ -327,8 +400,13 @@ export const ApiService = {
 
   // ── Worksheets ────────────────────────────────────────────────────────────
 
-  async generateWorksheet(config: WorksheetConfig): Promise<{ worksheet_id: string; status: string }> {
-    return fetchApi("/admin/worksheets/generate", { method: "POST", body: JSON.stringify(config) });
+  async generateWorksheet(
+    config: WorksheetConfig,
+  ): Promise<{ worksheet_id: string; status: string }> {
+    return fetchApi("/admin/worksheets/generate", {
+      method: "POST",
+      body: JSON.stringify(config),
+    });
   },
 
   async listWorksheets(): Promise<{ worksheets: GeneratedWorksheet[] }> {
@@ -344,7 +422,7 @@ export const ApiService = {
     attachAuth(headers, `/admin/worksheets/${id}/download`);
     const response = await fetch(
       `${API_BASE_URL}/admin/worksheets/${id}/download?type=${encodeURIComponent(type)}`,
-      { headers }
+      { headers },
     );
     if (!response.ok) throw new Error("Download failed");
     const blob = await response.blob();
@@ -364,7 +442,11 @@ export const ApiService = {
 
   // ── Util: client-side image compression ──────────────────────────────────
 
-  async compressImageToBase64(file: File, maxWidth = 1000, maxHeight = 1000): Promise<string> {
+  async compressImageToBase64(
+    file: File,
+    maxWidth = 1000,
+    maxHeight = 1000,
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -373,9 +455,15 @@ export const ApiService = {
           let { width, height } = img;
 
           if (width > height) {
-            if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
           } else {
-            if (height > maxHeight) { width = Math.round((width * maxHeight) / height); height = maxHeight; }
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
           }
 
           const canvas = document.createElement("canvas");
