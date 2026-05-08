@@ -61,7 +61,7 @@ export default function PaperDetail() {
     if (!paper) return;
     try {
       const res = await ApiService.generatePaper(paper.config);
-      navigate(`/admin/teacher/papers/${res.paper_id}`);
+      navigate(`/admin/papers/${res.paper_id}`);
     } catch {
       toast.error("Failed to start regeneration");
     }
@@ -79,7 +79,7 @@ export default function PaperDetail() {
     return (
       <div className="p-8 text-center">
         <p className="text-[#4B5563]">Paper not found.</p>
-        <Link to="/admin/teacher/papers" className="text-[#FC8019] font-bold mt-2 inline-block">← Back to Papers</Link>
+        <Link to="/admin/papers" className="text-[#FC8019] font-bold mt-2 inline-block">← Back to Papers</Link>
       </div>
     );
   }
@@ -98,7 +98,7 @@ export default function PaperDetail() {
     <div className="flex flex-col lg:flex-row h-full min-h-screen">
       {/* Left panel */}
       <div className="lg:w-[40%] p-4 sm:p-6 border-b lg:border-b-0 lg:border-r border-black/5 space-y-5 overflow-y-auto">
-        <Link to="/admin/teacher/papers" className="inline-flex items-center gap-2 text-sm text-[#4B5563] hover:text-[#FC8019] font-medium transition-colors">
+        <Link to="/admin/papers" className="inline-flex items-center gap-2 text-sm text-[#4B5563] hover:text-[#FC8019] font-medium transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to Papers
         </Link>
 

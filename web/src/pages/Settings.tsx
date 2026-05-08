@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Copy, Check } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -17,10 +16,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import type { Board, Lang } from "@/lib/auth";
-import { getSubscription, formatDate } from "@/lib/billing";
-import { getUsage } from "@/lib/chat";
-import { PLAN_QUOTAS } from "@/lib/chat";
-import { getCode } from "@/lib/referrals";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -41,7 +36,6 @@ export default function Settings() {
 
   const [nameDraft, setNameDraft] = useState(user?.name ?? "");
   const [savedFlash, setSavedFlash] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -51,12 +45,6 @@ export default function Settings() {
 
   if (!user) return null;
 
-  const plan = user.plan;
-  const sub = getSubscription();
-  const usage = getUsage(user.phone);
-  const quota = PLAN_QUOTAS[plan] ?? 50;
-  const code = getCode(user.phone);
-  const referralFull = `JAVAAB-${code}`;
   const isDirty = nameDraft.trim() !== (user.name ?? "");
   const initial = (user.name ?? "").trim().charAt(0).toUpperCase();
   const maskedPhone = `+91 XXXXXX${user.phone.slice(-4)}`;
@@ -91,19 +79,9 @@ export default function Settings() {
     toast("✓ Updated");
   };
 
-  const handleCopyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(referralFull);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("Could not copy");
-    }
-  };
-
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
   const handleDelete = () => {
@@ -114,11 +92,9 @@ export default function Settings() {
       /* noop */
     }
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
-  const planMeta = PLAN_META[plan];
-  const usagePct = quota === Infinity ? 0 : Math.min(100, Math.round((usage / quota) * 100));
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -230,94 +206,6 @@ export default function Settings() {
             </p>
           </Section>
 
-          {/* SECTION 3 — SUBSCRIPTION */}
-          <Section label="Subscription">
-            <div className="rounded-3xl border border-border p-6">
-              <div className="mb-3 flex items-center gap-3">
-                <span
-                  className={cn(
-                    "rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide",
-                    planMeta.badgeCls,
-                  )}
-                >
-                  {planMeta.badge}
-                </span>
-                <h3 className="font-display text-xl font-extrabold">{planMeta.title}</h3>
-              </div>
-
-              {plan === "free" && (
-                <>
-                  <p className="mb-2 text-sm font-semibold">50 questions/month</p>
-                  <UsageBar pct={usagePct} />
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {usage} of 50 questions used this month
-                  </p>
-                  <Button
-                    onClick={() => navigate("/subscribe")}
-                    className="mt-5 w-full rounded-pill bg-primary font-bold text-primary-foreground hover:bg-primary/90"
-                  >
-                    Upgrade to Plus — ₹199/mo
-                  </Button>
-                </>
-              )}
-
-              {plan === "plus" && (
-                <>
-                  <p className="mb-2 text-sm font-semibold">1,000 questions/month</p>
-                  <UsageBar pct={usagePct} />
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {usage} of 1,000 questions used
-                    {sub?.renewsAt ? ` · Renews ${formatDate(sub.renewsAt)}` : ""}
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate("/subscribe")}
-                    className="mt-5 w-full rounded-pill font-bold"
-                  >
-                    Upgrade to Pro — ₹499/mo
-                  </Button>
-                </>
-              )}
-
-              {plan === "pro" && (
-                <>
-                  <p className="mb-2 text-sm font-semibold">Unlimited questions ∞</p>
-                  {sub?.renewsAt && (
-                    <p className="text-xs text-muted-foreground">
-                      Next billing date: {formatDate(sub.renewsAt)}
-                    </p>
-                  )}
-                </>
-              )}
-
-              {/* Referral row */}
-              <div className="mt-6 border-t border-border pt-4">
-                <FieldLabel>Your referral code</FieldLabel>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 rounded-xl bg-muted px-4 py-2 font-mono text-sm">
-                    {referralFull}
-                  </code>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleCopyCode}
-                    className="rounded-pill"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="h-3.5 w-3.5" /> Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-3.5 w-3.5" /> Copy
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Section>
-
           {/* SECTION 4 — APPEARANCE */}
           <Section label="Appearance">
             <FieldLabel>Theme</FieldLabel>
@@ -395,24 +283,6 @@ export default function Settings() {
 
 /* -------------------- helpers -------------------- */
 
-const PLAN_META: Record<string, { badge: string; badgeCls: string; title: string }> = {
-  free: {
-    badge: "Free",
-    badgeCls: "bg-muted text-muted-foreground",
-    title: "Javaab Free",
-  },
-  plus: {
-    badge: "Plus",
-    badgeCls: "bg-[hsl(var(--plus))]/15 text-[hsl(var(--plus))]",
-    title: "Javaab Plus",
-  },
-  pro: {
-    badge: "Pro",
-    badgeCls: "bg-[hsl(var(--pro))]/15 text-[hsl(var(--pro))]",
-    title: "Javaab Pro",
-  },
-};
-
 function Section({
   label,
   children,
@@ -475,13 +345,3 @@ function Chip({
   );
 }
 
-function UsageBar({ pct }: { pct: number }) {
-  return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-      <div
-        className="h-full rounded-full bg-primary transition-[width] duration-500"
-        style={{ width: `${pct}%` }}
-      />
-    </div>
-  );
-}

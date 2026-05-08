@@ -15,9 +15,6 @@ interface FetchOptions extends RequestInit {
 
 /** Endpoints that must NEVER carry an Authorization header. */
 const PUBLIC_ENDPOINTS = [
-  "/auth/login",
-  "/auth/verify",
-  "/auth/register",
   "/health",
 ];
 
@@ -154,52 +151,13 @@ async function consumeSseStream(
 }
 
 export const ApiService = {
-  // ── Auth / Profile ──────────────────────────────────────────────────────
-
-  async registerUser(data: {
-    phone: string;
-    name?: string;
-    class_level?: number;
-    board?: string;
-    language?: string;
-    referral_code?: string;
-  }) {
-    return fetchApi<{
-      status: string;
-      user_id: string;
-      referral_code: string;
-      access_token: string;
-      token_type: string;
-    }>("/auth/register", { method: "POST", body: JSON.stringify(data) });
-  },
-
-  async loginRequestOtp(phone: string) {
-    return fetchApi<{ status: string; message: string }>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ phone }),
-    });
-  },
-
-  async verifyOtpRemote(phone: string, otp: string) {
-    return fetchApi<{
-      access_token: string;
-      token_type: string;
-      token: string;
-    }>("/auth/verify", {
-      method: "POST",
-      body: JSON.stringify({ phone, otp }),
-    });
-  },
+  // ── Profile ──────────────────────────────────────────────────────────────
 
   async updateProfile(data: Record<string, unknown>) {
     return fetchApi("/student/profile", {
       method: "POST",
       body: JSON.stringify(data),
     });
-  },
-
-  async getProfile(): Promise<{ user: Record<string, unknown> }> {
-    return fetchApi("/auth/profile", { method: "GET" });
   },
 
   // ── Subjects ─────────────────────────────────────────────────────────────

@@ -54,23 +54,30 @@ class Settings(BaseSettings):
     AZURE_COSMOS_ENDPOINT: str = "https://example.documents.azure.com:443/"
     AZURE_COSMOS_KEY: str = ""
     AZURE_COSMOS_DATABASE: str = "javaab"
+    # Container names — must match what is deployed in Azure
+    COSMOS_CONTAINER_CLIENTS: str = "clients"      # partition key: /client_id
+    COSMOS_CONTAINER_LEDGER: str = "ledger"        # partition key: /client_id
+    COSMOS_CONTAINER_CONVERSATIONS: str = "conversations"
+    COSMOS_CONTAINER_PAPERS: str = "papers"
+    COSMOS_CONTAINER_WORKSHEETS: str = "worksheets"
 
     # Blob Storage
     AZURE_BLOB_CONNECTION_STRING: str = ""
     AZURE_BLOB_CONTAINER_PDFS: str = "pdfs"
 
-    # JWT Auth
+    # JWT Auth (B2C / API clients)
     JWT_SECRET: str = ""
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRY_HOURS: int = 168
 
-    # Auth Mode
-    AUTH_MODE: str = "mock"
-    MOCK_OTP: str = "123456"
+    # Admin Auth (separate credentials, separate JWT secret)
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD_HASH: str = ""  # bcrypt hash; generate with: python -c "from passlib.context import CryptContext; print(CryptContext(schemes=['bcrypt']).hash('yourpassword'))"
+    ADMIN_JWT_SECRET: str = ""  # separate from JWT_SECRET; falls back to JWT_SECRET if blank
+    ADMIN_JWT_EXPIRY_HOURS: int = 12
 
-    # Razorpay (optional — if unset, payment service returns a stub order id)
-    RAZORPAY_KEY_ID: str = ""
-    RAZORPAY_KEY_SECRET: str = ""
+    # Cosmos containers
+    COSMOS_CONTAINER_AUDIT_LOG: str = "admin_audit_log"  # partition key: /admin_user
 
     # QA safety cap — remove or raise before public launch
     DAILY_GLOBAL_CAP: int = 500

@@ -61,6 +61,49 @@ class PaperService:
             return self.settings.AZURE_OPENAI_NANO_DEPLOYMENT
         return self.settings.AZURE_OPENAI_MINI_DEPLOYMENT
 
+    async def generate_structured(
+        self, config: PaperConfig
+    ) -> tuple[list[PaperVariant], int, int]:
+        """
+        Generate question paper variants and return structured data.
+
+        Unlike generate_paper this is synchronous (not a background task), does
+        not touch Cosmos, and raises on failure so callers can return HTTP errors.
+
+        Returns:
+            (variants, total_prompt_tokens, total_completion_tokens)
+        """
+        total_prompt_tokens = 0
+        total_completion_tokens = 0
+
+        base_sections: dict[str, list[GeneratedQuestion]] = {}
+        for section in config.sections:
+            questions, pt, ct, _ = await self._generate_section_questions(section, config)
+            if not questions:
+                raise ValueError(
+                    f"Failed to generate questions for section '{section.section_label}' "
+                    f"(type={section.question_type.value}). Check chapters list."
+                )
+            base_sections[section.section_label] = questions
+            total_prompt_tokens += pt
+            total_completion_tokens += ct
+
+        variants: list[PaperVariant] = []
+        for i in range(config.num_variants):
+            label = _VARIANT_LABELS[i]
+            sections_questions: dict[str, list[GeneratedQuestion]] = {}
+            for section_label, questions in base_sections.items():
+                shuffled = list(questions)
+                if i > 0:
+                    random.shuffle(shuffled)
+                sections_questions[section_label] = shuffled
+            variants.append(PaperVariant(
+                variant_label=f"Set {label}",
+                sections=sections_questions,
+            ))
+
+        return variants, total_prompt_tokens, total_completion_tokens
+
     async def generate_paper(
         self, config: PaperConfig, teacher_id: str, paper_id: str
     ) -> None:

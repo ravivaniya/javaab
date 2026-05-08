@@ -66,7 +66,7 @@ export default function PapersList() {
           <p className="text-[#4B5563] mt-1">Generate AI-powered exam papers for your class.</p>
         </div>
         <button
-          onClick={() => navigate("/admin/teacher/papers/new")}
+          onClick={() => navigate("/admin/papers/new")}
           className="inline-flex items-center gap-2 bg-[#FC8019] text-white rounded-full font-bold px-6 py-3 hover:bg-[#E67315] hover:-translate-y-0.5 transition-all shadow-[0_8px_32px_rgba(252,128,25,0.15)]"
           data-testid="create-paper-btn"
         >
@@ -109,7 +109,7 @@ export default function PapersList() {
           <h3 className="font-display font-black text-xl text-[#1E1E1E]">No question papers yet</h3>
           <p className="text-[#4B5563] mt-2">Create your first paper in under 2 minutes</p>
           <button
-            onClick={() => navigate("/admin/teacher/papers/new")}
+            onClick={() => navigate("/admin/papers/new")}
             className="mt-6 inline-flex items-center gap-2 bg-[#FC8019] text-white rounded-full font-bold px-8 py-4 hover:bg-[#E67315] hover:-translate-y-1 transition-all shadow-[0_8px_32px_rgba(252,128,25,0.15)]"
           >
             <Plus className="w-5 h-5" /> Create New Paper
@@ -129,7 +129,7 @@ export default function PapersList() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
                   className="bg-white rounded-3xl border border-black/5 p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
-                  onClick={() => navigate(`/admin/teacher/papers/${paper.id}`)}
+                  onClick={() => navigate(`/admin/papers/${paper.id}`)}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="flex-1 space-y-2">
@@ -176,7 +176,7 @@ export default function PapersList() {
                       )}
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={e => { e.stopPropagation(); navigate(`/admin/teacher/papers/${paper.id}`); }}
+                          onClick={e => { e.stopPropagation(); navigate(`/admin/papers/${paper.id}`); }}
                           className="flex items-center gap-1.5 border-2 border-[#1E1E1E] rounded-full px-4 py-2 text-sm font-bold hover:bg-[#1E1E1E] hover:text-white transition-all"
                         >
                           <Eye className="w-4 h-4" /> View

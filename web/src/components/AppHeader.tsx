@@ -1,13 +1,9 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  Gift,
-  LayoutDashboard,
   LogOut,
   MessageCircle,
   Settings,
-  Sparkles,
-  Ticket,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -48,11 +44,9 @@ export function AppHeader({ showBack = false, leftSlot, rightSlot }: Props) {
     (user?.name ?? "").trim().charAt(0).toUpperCase() ||
     user?.phone?.slice(-2) ||
     "JV";
-  const isFree = (user?.plan ?? "free") === "free";
-
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
   return (
@@ -89,46 +83,11 @@ export function AppHeader({ showBack = false, leftSlot, rightSlot }: Props) {
             <MessageCircle className="h-4 w-4" />
             Chat
           </Link>
-          <Link
-            to="/tickets"
-            className={cn(
-              "flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-sm font-medium transition-colors",
-              pathname === "/tickets" || pathname.startsWith("/tickets/")
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-          >
-            <Ticket className="h-4 w-4" />
-            Tickets
-          </Link>
-          {user?.role === "teacher" && (
-            <Link
-              to="/admin/teacher/dashboard"
-              className={cn(
-                "flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-sm font-medium transition-colors",
-                pathname.startsWith("/admin/teacher")
-                  ? "bg-[#FC8019]/10 text-[#FC8019] font-bold"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              Teacher
-            </Link>
-          )}
         </nav>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
           {rightSlot}
           <ThemeToggle className="hidden sm:inline-flex" />
-          {isFree && (
-            <Link
-              to="/subscribe"
-              className="hidden items-center gap-1 rounded-pill bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary/90 sm:inline-flex"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              Upgrade
-            </Link>
-          )}
           <span
             className={cn(
               "hidden rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide sm:inline-block",
@@ -156,28 +115,6 @@ export function AppHeader({ showBack = false, leftSlot, rightSlot }: Props) {
               <DropdownMenuItem asChild>
                 <Link to="/settings" className="cursor-pointer">
                   <Settings className="h-4 w-4" /> Profile &amp; Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/settings/subscription" className="cursor-pointer">
-                  <Sparkles className="h-4 w-4" /> Subscription
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/tickets" className="cursor-pointer md:hidden">
-                  <Ticket className="h-4 w-4" /> Tickets
-                </Link>
-              </DropdownMenuItem>
-              {user?.role === "teacher" && (
-                <DropdownMenuItem asChild>
-                  <Link to="/admin/teacher/dashboard" className="cursor-pointer">
-                    <LayoutDashboard className="h-4 w-4" /> Teacher Portal
-                  </Link>
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem asChild>
-                <Link to="/refer" className="cursor-pointer">
-                  <Gift className="h-4 w-4" /> Refer &amp; earn
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

@@ -209,6 +209,87 @@ Return ONLY valid JSON:
 </body>
 </html>"""
 
+    async def generate_dpp_structured(
+        self, config: WorksheetConfig
+    ) -> tuple[list[dict], int, int]:
+        """
+        Synchronous DPP generation (not a background task).
+
+        Returns (question_dicts, prompt_tokens, completion_tokens).
+        Each dict contains: question_text, difficulty, solution_steps,
+        correct_answer, concept_tags.
+        Raises on failure so the caller can return an HTTP error.
+        """
+        lang_note = {
+            "gu": "Write in Gujarati script.",
+            "hi": "Write in Devanagari script.",
+            "en": "Write in English.",
+        }.get(config.language, "Write in English.")
+
+        system_prompt = (
+            f"You are an expert question setter for Indian {config.board} board, "
+            f"Class {config.class_level}, Subject: {config.subject}. "
+            "You follow the NCERT/GSEB syllabus exactly. "
+            "Use LaTeX for all mathematical expressions: inline \\( \\) and block \\[ \\]. "
+            f"{lang_note}"
+        )
+
+        topic_hint = (
+            f"\nNarrow focus within chapter: \"{config.topic}\"."
+            if config.topic
+            else ""
+        )
+        difficulty_note = (
+            "Generate a mix of easy, medium, and hard questions."
+            if config.difficulty == "mixed"
+            else f"All questions should be {config.difficulty} difficulty."
+        )
+        user_prompt = f"""Generate {config.num_questions} DPP (Daily Practice Problem) questions.
+Chapter: {config.chapter}, {config.subject}, Class {config.class_level}, {config.board.upper()}.{topic_hint}
+{difficulty_note}
+Type mix: 40% MCQ, 30% short answer, 20% fill in the blank, 10% assertion/reason.
+
+Return ONLY valid JSON:
+{{
+  "questions": [
+    {{
+      "question_text": "...",
+      "difficulty": "easy|medium|hard",
+      "solution_steps": "Step 1: ...\\nStep 2: ...",
+      "correct_answer": "...",
+      "concept_tags": ["tag1", "tag2"]
+    }}
+  ]
+}}"""
+
+        for attempt in range(2):
+            try:
+                response = await self.openai_client.chat.completions.create(
+                    model=self.settings.AZURE_OPENAI_FULL_DEPLOYMENT,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    response_format={"type": "json_object"},
+                    temperature=0.7,
+                )
+                usage = response.usage
+                prompt_tokens = usage.prompt_tokens if usage else 0
+                completion_tokens = usage.completion_tokens if usage else 0
+                raw = response.choices[0].message.content or "{}"
+                data = json.loads(raw)
+                items: list[dict] = data if isinstance(data, list) else data.get("questions", [])
+                if not items:
+                    raise ValueError("LLM returned zero questions.")
+                return items, prompt_tokens, completion_tokens
+            except Exception as e:
+                if attempt == 1:
+                    logger.error(f"generate_dpp_structured failed: {e}")
+                    raise
+                logger.warning(f"generate_dpp_structured attempt {attempt + 1} failed, retrying: {e}")
+
+        return [], 0, 0  # unreachable; satisfies type checker
+
     def _render_answer_key_html(
         self, config: WorksheetConfig, questions: list[WorksheetQuestion]
     ) -> str:

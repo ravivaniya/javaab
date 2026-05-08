@@ -157,7 +157,7 @@ export default function CreatePaper() {
     setSubmitting(true);
     try {
       const res = await ApiService.generatePaper(config);
-      navigate(`/admin/teacher/papers/${res.paper_id}`);
+      navigate(`/admin/papers/${res.paper_id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Generation failed");
       setSubmitting(false);

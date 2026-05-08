@@ -67,7 +67,7 @@ export default function CreateWorksheet() {
     setSubmitting(true);
     try {
       const res = await ApiService.generateWorksheet(config);
-      navigate(`/admin/teacher/worksheets/${res.worksheet_id}`);
+      navigate(`/admin/worksheets/${res.worksheet_id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Generation failed");
       setSubmitting(false);

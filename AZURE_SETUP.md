@@ -198,7 +198,7 @@ az redis list-keys \
 
 ## 7. Cosmos DB (Database)
 
-We use Cosmos DB to store user data, chat conversations, and support tickets.
+We use Cosmos DB to store user data, chat conversations, papers, and worksheets.
 
 ```bash
 # Register the DocumentDB provider
@@ -239,13 +239,29 @@ az cosmosdb sql container create \
  --name conversations \
  --partition-key-path "/studentId"
 
-# Tickets container
+# Messages container
 az cosmosdb sql container create \
  --account-name javaab-db \
  --resource-group javaab-rg \
  --database-name javaab \
- --name tickets \
- --partition-key-path "/studentId"
+ --name messages \
+ --partition-key-path "/conversationId"
+
+# Papers container
+az cosmosdb sql container create \
+ --account-name javaab-db \
+ --resource-group javaab-rg \
+ --database-name javaab \
+ --name papers \
+ --partition-key-path "/id"
+
+# Worksheets container
+az cosmosdb sql container create \
+ --account-name javaab-db \
+ --resource-group javaab-rg \
+ --database-name javaab \
+ --name worksheets \
+ --partition-key-path "/id"
 ```
 
 ---

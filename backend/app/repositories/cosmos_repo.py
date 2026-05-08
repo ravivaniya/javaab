@@ -17,12 +17,10 @@ CONTAINER_USERS = "users"
 CONTAINER_CONVERSATIONS = "conversations"
 CONTAINER_MESSAGES = "messages"
 CONTAINER_BOOKMARKS = "bookmarks"
-CONTAINER_TICKETS = "tickets"
 CONTAINER_USAGE_LOGS = "usage_logs"
 CONTAINER_CACHE_CANDIDATES = "cache_candidates"
 CONTAINER_REVIEW_TASKS = "review_tasks"
 CONTAINER_FEEDBACK = "feedback"
-CONTAINER_REFERRALS = "referrals"
 CONTAINER_PAPERS = "papers"
 CONTAINER_WORKSHEETS = "worksheets"
 
@@ -71,12 +69,10 @@ class CosmosRepo:
                 CONTAINER_CONVERSATIONS,
                 CONTAINER_MESSAGES,
                 CONTAINER_BOOKMARKS,
-                CONTAINER_TICKETS,
                 CONTAINER_USAGE_LOGS,
                 CONTAINER_CACHE_CANDIDATES,
                 CONTAINER_REVIEW_TASKS,
                 CONTAINER_FEEDBACK,
-                CONTAINER_REFERRALS,
                 CONTAINER_PAPERS,
                 CONTAINER_WORKSHEETS,
             ):
@@ -160,21 +156,6 @@ class CosmosRepo:
             await self.upsert_user({"id": user_id, "monthly_queries_used": 1})
         except CosmosHttpResponseError as e:
             logger.error(f"increment_user_usage({user_id}) failed: {e}")
-
-    async def get_user_by_referral_code(self, code: str) -> Optional[dict]:
-        """Find a user document by its referral_code field."""
-        container = self._container(CONTAINER_USERS)
-        if container is None:
-            return None
-        try:
-            query = "SELECT TOP 1 * FROM c WHERE c.referral_code = @code"
-            params = [{"name": "@code", "value": code}]
-            async for item in container.query_items(query=query, parameters=params):
-                return item
-            return None
-        except CosmosHttpResponseError as e:
-            logger.error(f"get_user_by_referral_code failed: {e}")
-            return None
 
     # ── Conversation operations ───────────────────────────────────────────────
 
@@ -499,20 +480,6 @@ class CosmosRepo:
         except CosmosHttpResponseError as e:
             logger.error(f"add_to_cache_candidate failed: {e}")
 
-    # ── Referrals ─────────────────────────────────────────────────────────────
-
-    async def upsert_referral_reward(self, reward: dict):
-        """Persist a referral reward record. `reward` should include id, user_id, code, days, granted_at."""
-        container = self._container(CONTAINER_REFERRALS)
-        if container is None:
-            logger.info(f"[degraded] upsert_referral_reward: {reward.get('id')}")
-            return
-        try:
-            reward.setdefault("granted_at", _now_iso())
-            await container.upsert_item(body=reward)
-        except CosmosHttpResponseError as e:
-            logger.error(f"upsert_referral_reward failed: {e}")
-
     # ── Usage / analytics ────────────────────────────────────────────────────
 
     async def log_query_usage(self, usage: dict):
@@ -527,153 +494,6 @@ class CosmosRepo:
             await container.upsert_item(body=doc)
         except CosmosHttpResponseError as e:
             logger.error(f"log_query_usage failed: {e}")
-
-    # ── Ticket operations ─────────────────────────────────────────────────────
-
-    async def count_user_tickets_this_month(self, user_id: str) -> int:
-        container = self._container(CONTAINER_TICKETS)
-        if container is None:
-            return 0
-        try:
-            month_prefix = datetime.now(timezone.utc).strftime("%Y-%m")
-            query = (
-                "SELECT VALUE COUNT(1) FROM c WHERE c.user_id = @uid "
-                "AND STARTSWITH(c.created_at, @prefix)"
-            )
-            params = [
-                {"name": "@uid", "value": user_id},
-                {"name": "@prefix", "value": month_prefix},
-            ]
-            async for v in container.query_items(
-                query=query, parameters=params, partition_key=user_id
-            ):
-                return int(v or 0)
-            return 0
-        except CosmosHttpResponseError as e:
-            logger.error(f"count_user_tickets_this_month failed: {e}")
-            return 0
-
-    async def create_ticket(self, ticket_data: dict):
-        container = self._container(CONTAINER_TICKETS)
-        if container is None:
-            logger.info(f"[degraded] create_ticket: {ticket_data.get('ticket_id')}")
-            return
-        try:
-            ticket_id = ticket_data.get("ticket_id") or ticket_data.get("id")
-            doc = {**ticket_data, "id": ticket_id}
-            doc.setdefault("status", "OPEN")
-            doc.setdefault("created_at", _now_iso())
-            await container.upsert_item(body=doc)
-        except CosmosHttpResponseError as e:
-            logger.error(f"create_ticket failed: {e}")
-
-    async def get_tickets_by_user(self, user_id: str) -> list:
-        container = self._container(CONTAINER_TICKETS)
-        if container is None:
-            return []
-        try:
-            query = "SELECT * FROM c WHERE c.user_id = @uid ORDER BY c.created_at DESC"
-            params = [{"name": "@uid", "value": user_id}]
-            results: List[dict] = []
-            async for item in container.query_items(
-                query=query, parameters=params, partition_key=user_id
-            ):
-                results.append(item)
-            return results
-        except CosmosHttpResponseError as e:
-            logger.error(f"get_tickets_by_user failed: {e}")
-            return []
-
-    async def get_open_tickets(self) -> list:
-        container = self._container(CONTAINER_TICKETS)
-        if container is None:
-            return []
-        try:
-            query = "SELECT * FROM c WHERE c.status = 'OPEN' ORDER BY c.created_at ASC"
-            results: List[dict] = []
-            async for item in container.query_items(
-                query=query, enable_cross_partition_query=True
-            ):
-                results.append(item)
-            return results
-        except CosmosHttpResponseError as e:
-            logger.error(f"get_open_tickets failed: {e}")
-            return []
-
-    async def get_ticket(self, ticket_id: str) -> dict:
-        container = self._container(CONTAINER_TICKETS)
-        default = {
-            "ticket_id": ticket_id,
-            "status": "OPEN",
-            "user_id": "unknown",
-            "question": "",
-            "board": "CBSE",
-            "class_level": 10,
-            "subject": "",
-        }
-        if container is None:
-            return default
-        try:
-            query = "SELECT TOP 1 * FROM c WHERE c.id = @id OR c.ticket_id = @id"
-            params = [{"name": "@id", "value": ticket_id}]
-            async for item in container.query_items(
-                query=query, parameters=params, enable_cross_partition_query=True
-            ):
-                return item
-            return default
-        except CosmosHttpResponseError as e:
-            logger.error(f"get_ticket failed: {e}")
-            return default
-
-    async def assign_ticket(self, ticket_id: str, teacher_id: str):
-        ticket = await self.get_ticket(ticket_id)
-        user_id = ticket.get("user_id", "unknown")
-        container = self._container(CONTAINER_TICKETS)
-        if container is None:
-            logger.info(f"[degraded] assign_ticket: {ticket_id} -> {teacher_id}")
-            return
-        try:
-            await container.patch_item(
-                item=ticket_id,
-                partition_key=user_id,
-                patch_operations=[
-                    {"op": "set", "path": "/assigned_teacher_id", "value": teacher_id},
-                    {"op": "set", "path": "/status", "value": "ASSIGNED"},
-                    {"op": "set", "path": "/assigned_at", "value": _now_iso()},
-                ],
-            )
-        except CosmosHttpResponseError as e:
-            logger.error(f"assign_ticket failed: {e}")
-
-    async def update_ticket_status(
-        self,
-        ticket_id: str,
-        status: str,
-        answer: Optional[str] = None,
-        teacher_id: Optional[str] = None,
-    ):
-        ticket = await self.get_ticket(ticket_id)
-        user_id = ticket.get("user_id", "unknown")
-        container = self._container(CONTAINER_TICKETS)
-        if container is None:
-            logger.info(f"[degraded] update_ticket_status: {ticket_id} -> {status}")
-            return
-        try:
-            ops = [
-                {"op": "set", "path": "/status", "value": status},
-                {"op": "set", "path": "/updated_at", "value": _now_iso()},
-            ]
-            if answer is not None:
-                ops.append({"op": "set", "path": "/answer", "value": answer})
-            if teacher_id is not None:
-                ops.append({"op": "set", "path": "/resolved_by", "value": teacher_id})
-            await container.patch_item(
-                item=ticket_id,
-                partition_key=user_id,
-                patch_operations=ops,
-            )
-        except CosmosHttpResponseError as e:
-            logger.error(f"update_ticket_status failed: {e}")
 
     # ── Papers ────────────────────────────────────────────────────────────────
 

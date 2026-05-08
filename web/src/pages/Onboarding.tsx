@@ -12,8 +12,6 @@ import { StruggleStep } from "@/components/onboarding/StruggleStep";
 import { DoneStep } from "@/components/onboarding/DoneStep";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  clearPendingPlan,
-  getPendingPlan,
   type Board,
   type DifficultSubject,
   type InputMode,
@@ -83,13 +81,7 @@ export default function Onboarding() {
   };
 
   const handlePrimary = () => {
-    const pending = getPendingPlan();
-    if (pending) {
-      clearPendingPlan();
-      navigate(`/subscribe?plan=${pending}`, { replace: true });
-    } else {
-      navigate("/chat", { replace: true });
-    }
+    navigate("/chat", { replace: true });
   };
 
   // Single source of truth for the Next button — every step has one.

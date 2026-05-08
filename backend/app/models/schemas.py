@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 
 class ChatRequest(BaseModel):
     user_id: str
@@ -23,38 +23,36 @@ class ChatResponse(BaseModel):
     confidence: str
     sources: List[str] = []
 
+class Source(BaseModel):
+    """Reference to a textbook chunk or verified-answer source."""
+    title: str
+    chapter: Optional[str] = None
+    page: Optional[int] = None
+    score: Optional[float] = None
+
 class ModelRouterResponse(BaseModel):
     model_config = ConfigDict(protected_namespaces=())
 
-    answer: str
+    content: str
     model_used: str
-    tokens_in: int
-    tokens_out: int
-    cost: float
-    confidence: str
+    tier: int                       # 0=cache, 1=nano, 2=mini, 3=full
+    tokens_input: int
+    tokens_output: int
+    tokens_total: int
     from_cache: bool
-    sources: List[str]
+    confidence: str                 # "high" | "medium" | "low" | "none"
+    sources: List[Source]
     conversation_id: Optional[str] = None
+    classification_tokens: int = 0  # tokens spent on the complexity classifier
+    embedding_tokens: int = 0       # tokens spent on RAG embedding (populated by caller)
+    total_billable_tokens: int = 0  # tokens_total + classification_tokens + embedding_tokens
+    cost: float = 0.0
 
 class ImageExtractionResult(BaseModel):
     extracted_text: str
     detected_language: str
     detected_subject: str
     is_clear: bool
-
-class TicketCreateRequest(BaseModel):
-    user_id: str
-    question: str
-    image_base64: Optional[str] = None
-    board: str
-    class_level: int
-    subject: Optional[str] = ""
-    ai_attempts: List[str] = []
-
-class TicketResponseRequest(BaseModel):
-    teacher_id: str
-    answer: str
-    source_citation: Optional[str] = None
 
 class TitleUpdateRequest(BaseModel):
     """PATCH /chat/{conversation_id}/title"""

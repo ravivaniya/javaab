@@ -11,9 +11,6 @@ logger = logging.getLogger(__name__)
 # Public endpoints that bypass JWT verification entirely.
 PUBLIC_PATHS = {
     "/health",
-    "/auth/login",
-    "/auth/verify",
-    "/auth/register",
     "/docs",
     "/openapi.json",
     "/redoc",

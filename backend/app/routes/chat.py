@@ -198,7 +198,7 @@ async def ask_pipeline_generator(
                     perform_background_logging,
                     request.user_id,
                     query,
-                    meta.get("answer", ""),
+                    meta.get("content", ""),
                     meta,
                     message_id,
                     conversation_id,
