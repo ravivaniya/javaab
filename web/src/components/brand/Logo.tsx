@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
-import logoSrc from "@/assets/logo.png";
+import { widgetConfig } from "@/config/widget.config";
+import defaultLogoSrc from "@/assets/logo.png";
 
 interface LogoProps {
   className?: string;
@@ -7,20 +8,18 @@ interface LogoProps {
   hideWordmark?: boolean;
 }
 
-/** Javaab brand mark + wordmark. */
-export function Logo({
-  className,
-  variant = "default",
-  hideWordmark = false,
-}: LogoProps) {
+/** Institute logo + wordmark, driven by widget.config.ts. */
+export function Logo({ className, variant = "default", hideWordmark = false }: LogoProps) {
   const ink = variant === "light" ? "hsl(0 0% 100%)" : "hsl(var(--foreground))";
+  const { logo_url, name } = widgetConfig.institute;
+
   return (
     <div
       className={cn("inline-flex items-center gap-2", className)}
-      aria-label="Javaab"
+      aria-label={name}
     >
       <img
-        src={logoSrc}
+        src={logo_url ?? defaultLogoSrc}
         alt=""
         width={34}
         height={34}
@@ -31,7 +30,7 @@ export function Logo({
           className="font-display text-xl font-black tracking-tight"
           style={{ color: ink }}
         >
-          Javaab
+          {name}
         </span>
       )}
     </div>

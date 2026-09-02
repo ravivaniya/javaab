@@ -61,7 +61,7 @@ export default function PaperDetail() {
     if (!paper) return;
     try {
       const res = await ApiService.generatePaper(paper.config);
-      navigate(`/admin/papers/${res.paper_id}`);
+      navigate(`/question-paper/${res.paper_id}`);
     } catch {
       toast.error("Failed to start regeneration");
     }
@@ -70,7 +70,7 @@ export default function PaperDetail() {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-4 border-[#FC8019] border-t-transparent animate-spin" />
+        <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -79,7 +79,7 @@ export default function PaperDetail() {
     return (
       <div className="p-8 text-center">
         <p className="text-[#4B5563]">Paper not found.</p>
-        <Link to="/admin/papers" className="text-[#FC8019] font-bold mt-2 inline-block">← Back to Papers</Link>
+        <Link to="/question-paper" className="text-primary font-bold mt-2 inline-block">← Back to Papers</Link>
       </div>
     );
   }
@@ -98,7 +98,7 @@ export default function PaperDetail() {
     <div className="flex flex-col lg:flex-row h-full min-h-screen">
       {/* Left panel */}
       <div className="lg:w-[40%] p-4 sm:p-6 border-b lg:border-b-0 lg:border-r border-black/5 space-y-5 overflow-y-auto">
-        <Link to="/admin/papers" className="inline-flex items-center gap-2 text-sm text-[#4B5563] hover:text-[#FC8019] font-medium transition-colors">
+        <Link to="/question-paper" className="inline-flex items-center gap-2 text-sm text-[#4B5563] hover:text-primary font-medium transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to Papers
         </Link>
 
@@ -134,7 +134,7 @@ export default function PaperDetail() {
               <button
                 key={label}
                 onClick={() => setActiveVariant(i)}
-                className={`px-4 py-2 rounded-full font-bold text-sm transition-all ${activeVariant === i ? "bg-[#FC8019] text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-[#FC8019]/10"}`}
+                className={`px-4 py-2 rounded-full font-bold text-sm transition-all ${activeVariant === i ? "bg-primary text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-primary/10"}`}
               >
                 {label}
               </button>
@@ -207,7 +207,7 @@ export default function PaperDetail() {
 
         <button
           onClick={handleRegenerate}
-          className="flex items-center gap-2 border-2 border-black/20 rounded-full px-5 py-2.5 font-semibold text-sm text-[#4B5563] hover:border-[#FC8019] hover:text-[#FC8019] transition-all"
+          className="flex items-center gap-2 border-2 border-black/20 rounded-full px-5 py-2.5 font-semibold text-sm text-[#4B5563] hover:border-primary hover:text-primary transition-all"
         >
           <RefreshCw className="w-4 h-4" /> ⟳ Regenerate
         </button>

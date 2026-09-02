@@ -37,6 +37,8 @@ const settingsSchema = z.object({
   rate_limit_per_minute: z.coerce.number().int().min(1),
   rate_limit_per_day: z.coerce.number().int().min(1),
   credit_alert_threshold: z.coerce.number().int().min(0),
+  whatsapp_number: z.string().regex(/^\+?[0-9]{10,15}$/, 'Enter a valid WhatsApp number'),
+  notes: z.string().max(500).optional(),
 });
 type SettingsValues = z.infer<typeof settingsSchema>;
 
@@ -183,6 +185,8 @@ export default function ClientDetail() {
           rate_limit_per_minute: client.rate_limit_per_minute,
           rate_limit_per_day: client.rate_limit_per_day,
           credit_alert_threshold: client.credit_alert_threshold,
+          whatsapp_number: client.whatsapp_number,
+          notes: client.notes ?? '',
         }
       : undefined,
   });
@@ -467,6 +471,25 @@ export default function ClientDetail() {
                   type="number"
                   {...settingsForm.register('credit_alert_threshold')}
                   className={inputCls}
+                />
+              </Field>
+              <Field
+                label="WhatsApp number (for alerts)"
+                error={settingsForm.formState.errors.whatsapp_number?.message}
+              >
+                <input
+                  type="tel"
+                  {...settingsForm.register('whatsapp_number')}
+                  className={inputCls}
+                  placeholder="+91XXXXXXXXXX"
+                />
+              </Field>
+              <Field label="Internal notes">
+                <textarea
+                  {...settingsForm.register('notes')}
+                  rows={3}
+                  className={inputCls}
+                  placeholder="Optional internal notes"
                 />
               </Field>
 

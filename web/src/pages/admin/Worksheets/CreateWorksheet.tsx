@@ -1,12 +1,13 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { widgetConfig } from "@/config/widget.config";
 import { Zap } from "lucide-react";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
 import type { WorksheetConfig, WorksheetType } from "@/types/worksheet";
 import { getSubjects, getChapters, TOPIC_SUGGESTIONS } from "@/lib/chapters";
 
-const INPUT_CLS = "w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-[#FC8019] focus:ring-2 focus:ring-[#FC8019]/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all";
+const INPUT_CLS = "w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all";
 
 const WORKSHEET_TYPES: { value: WorksheetType; label: string; emoji: string; desc: string }[] = [
   { value: "dpp", label: "DPP", emoji: "📝", desc: "Daily Practice" },
@@ -37,7 +38,7 @@ export default function CreateWorksheet() {
   const [dateField, setDateField] = useState(true);
   const [studentNameField, setStudentNameField] = useState(true);
   const [language, setLanguage] = useState("en");
-  const [instituteName, setInstituteName] = useState("");
+  const [instituteName, setInstituteName] = useState(widgetConfig.institute.name);
 
   const availableSubjects = getSubjects(board, classLevel);
   const availableChapters = subject ? getChapters(board, classLevel, subject) : [];
@@ -67,7 +68,7 @@ export default function CreateWorksheet() {
     setSubmitting(true);
     try {
       const res = await ApiService.generateWorksheet(config);
-      navigate(`/admin/worksheets/${res.worksheet_id}`);
+      navigate(`/dpp/${res.worksheet_id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Generation failed");
       setSubmitting(false);
@@ -95,7 +96,7 @@ export default function CreateWorksheet() {
                   key={b}
                   type="button"
                   onClick={() => { setBoard(b); setSubject(""); setChapter(""); }}
-                  className={`flex-1 py-2 px-4 rounded-full font-bold text-sm transition-all ${board === b ? "bg-[#FC8019] text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-[#FC8019]/10"}`}
+                  className={`flex-1 py-2 px-4 rounded-full font-bold text-sm transition-all ${board === b ? "bg-primary text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-primary/10"}`}
                 >
                   {b}
                 </button>
@@ -109,7 +110,7 @@ export default function CreateWorksheet() {
                   key={n}
                   type="button"
                   onClick={() => { setClassLevel(n); setSubject(""); setChapter(""); }}
-                  className={`w-9 h-9 rounded-full font-bold text-sm transition-all ${classLevel === n ? "bg-[#FC8019] text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-[#FC8019]/10"}`}
+                  className={`w-9 h-9 rounded-full font-bold text-sm transition-all ${classLevel === n ? "bg-primary text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-primary/10"}`}
                 >
                   {n}
                 </button>
@@ -165,7 +166,7 @@ export default function CreateWorksheet() {
                       key={s}
                       type="button"
                       onMouseDown={() => setTopic(s)}
-                      className="w-full text-left px-4 py-2.5 text-sm text-[#1E1E1E] hover:bg-[#FC8019]/5 hover:text-[#FC8019] transition-colors"
+                      className="w-full text-left px-4 py-2.5 text-sm text-[#1E1E1E] hover:bg-primary/5 hover:text-primary transition-colors"
                     >
                       {s}
                     </button>
@@ -184,7 +185,7 @@ export default function CreateWorksheet() {
                   key={t.value}
                   type="button"
                   onClick={() => setWorksheetType(t.value)}
-                  className={`rounded-2xl border-2 p-3 text-left transition-all ${worksheetType === t.value ? "border-[#FC8019] bg-[#FC8019]/5" : "border-black/10 hover:border-black/30"}`}
+                  className={`rounded-2xl border-2 p-3 text-left transition-all ${worksheetType === t.value ? "border-primary bg-primary/5" : "border-black/10 hover:border-black/30"}`}
                   data-testid={`type-${t.value}`}
                 >
                   <div className="text-xl">{t.emoji}</div>
@@ -202,7 +203,7 @@ export default function CreateWorksheet() {
             <div>
               <div className="flex justify-between text-sm font-medium text-[#1E1E1E] mb-2">
                 <span>Questions</span>
-                <span className="font-bold text-[#FC8019]">{numQuestions}</span>
+                <span className="font-bold text-primary">{numQuestions}</span>
               </div>
               <input
                 type="range"
@@ -210,7 +211,7 @@ export default function CreateWorksheet() {
                 max={30}
                 value={numQuestions}
                 onChange={e => setNumQuestions(Number(e.target.value))}
-                className="w-full accent-[#FC8019] cursor-pointer"
+                className="w-full accent-primary cursor-pointer"
                 data-testid="num-questions-slider"
               />
               <div className="flex justify-between text-xs text-[#4B5563] mt-1">
@@ -226,7 +227,7 @@ export default function CreateWorksheet() {
                     key={d}
                     type="button"
                     onClick={() => setDifficulty(d)}
-                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all capitalize ${difficulty === d ? "bg-[#FC8019] text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-[#FC8019]/10"}`}
+                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all capitalize ${difficulty === d ? "bg-primary text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-primary/10"}`}
                     data-testid={`difficulty-${d}`}
                   >
                     {d}
@@ -247,7 +248,7 @@ export default function CreateWorksheet() {
                   <span className="text-sm text-[#1E1E1E]">{label}</span>
                   <div
                     onClick={() => set(!val)}
-                    className={`relative w-10 h-5 rounded-full transition-all cursor-pointer ${val ? "bg-[#FC8019]" : "bg-[#D1D5DB]"}`}
+                    className={`relative w-10 h-5 rounded-full transition-all cursor-pointer ${val ? "bg-primary" : "bg-[#D1D5DB]"}`}
                     data-testid={testId}
                   >
                     <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${val ? "translate-x-5" : "translate-x-0.5"}`} />
@@ -262,7 +263,7 @@ export default function CreateWorksheet() {
                   key={code}
                   type="button"
                   onClick={() => setLanguage(code)}
-                  className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${language === code ? "bg-[#FC8019] text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-[#FC8019]/10"}`}
+                  className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${language === code ? "bg-primary text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-primary/10"}`}
                 >
                   {label}
                 </button>
@@ -284,7 +285,7 @@ export default function CreateWorksheet() {
           <div className="bg-white rounded-3xl border border-black/5 p-6 shadow-sm">
             <h2 className="font-bold text-[#1E1E1E] mb-4">Your worksheet will have:</h2>
             <div className="text-center mb-6">
-              <div className="text-6xl font-black text-[#FC8019]">{numQuestions}</div>
+              <div className="text-6xl font-black text-primary">{numQuestions}</div>
               <div className="text-[#4B5563] font-medium">Questions</div>
             </div>
             <div className="space-y-3 text-sm">
@@ -294,7 +295,7 @@ export default function CreateWorksheet() {
               </div>
               <div className="flex justify-between">
                 <span className="text-[#4B5563]">Type</span>
-                <span className={`font-bold px-2 py-0.5 rounded-full text-xs ${WORKSHEET_TYPES.find(t => t.value === worksheetType)?.label ? "bg-[#FC8019]/10 text-[#FC8019]" : ""}`}>
+                <span className={`font-bold px-2 py-0.5 rounded-full text-xs ${WORKSHEET_TYPES.find(t => t.value === worksheetType)?.label ? "bg-primary/10 text-primary" : ""}`}>
                   {WORKSHEET_TYPES.find(t => t.value === worksheetType)?.label}
                 </span>
               </div>
@@ -316,7 +317,7 @@ export default function CreateWorksheet() {
           <button
             onClick={handleGenerate}
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 bg-[#FC8019] text-white rounded-full font-bold py-4 text-lg hover:bg-[#E67315] hover:-translate-y-0.5 transition-all shadow-[0_8px_32px_rgba(252,128,25,0.15)] disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 bg-primary text-white rounded-full font-bold py-4 text-lg hover:opacity-90 hover:-translate-y-0.5 transition-all  disabled:opacity-60 disabled:cursor-not-allowed"
             data-testid="generate-worksheet-btn"
           >
             {submitting ? (

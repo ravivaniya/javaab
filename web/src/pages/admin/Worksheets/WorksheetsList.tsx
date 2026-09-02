@@ -72,8 +72,8 @@ export default function WorksheetsList() {
           <p className="text-[#4B5563] mt-1">Generate topic-focused practice sheets for your students.</p>
         </div>
         <button
-          onClick={() => navigate("/admin/worksheets/new")}
-          className="inline-flex items-center gap-2 bg-[#FC8019] text-white rounded-full font-bold px-6 py-3 hover:bg-[#E67315] hover:-translate-y-0.5 transition-all shadow-[0_8px_32px_rgba(252,128,25,0.15)]"
+          onClick={() => navigate("/dpp/new")}
+          className="inline-flex items-center gap-2 bg-primary text-white rounded-full font-bold px-6 py-3 hover:opacity-90 hover:-translate-y-0.5 transition-all "
         >
           <Plus className="w-5 h-5" /> Create New
         </button>
@@ -85,7 +85,7 @@ export default function WorksheetsList() {
           <button
             key={f.value}
             onClick={() => setFilter(f.value)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${filter === f.value ? "bg-[#FC8019] text-white" : "bg-[#F3F4F6] text-[#4B5563] hover:bg-[#FC8019]/10"}`}
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${filter === f.value ? "bg-primary text-white" : "bg-[#F3F4F6] text-[#4B5563] hover:bg-primary/10"}`}
           >
             {f.label}
           </button>
@@ -102,8 +102,8 @@ export default function WorksheetsList() {
           <h3 className="font-display font-black text-xl text-[#1E1E1E]">No worksheets yet</h3>
           <p className="text-[#4B5563] mt-2">Create a DPP or worksheet in under a minute</p>
           <button
-            onClick={() => navigate("/admin/worksheets/new")}
-            className="mt-6 inline-flex items-center gap-2 bg-[#FC8019] text-white rounded-full font-bold px-8 py-4 hover:bg-[#E67315] hover:-translate-y-1 transition-all shadow-[0_8px_32px_rgba(252,128,25,0.15)]"
+            onClick={() => navigate("/dpp/new")}
+            className="mt-6 inline-flex items-center gap-2 bg-primary text-white rounded-full font-bold px-8 py-4 hover:opacity-90 hover:-translate-y-1 transition-all "
           >
             <Plus className="w-5 h-5" /> Create New
           </button>
@@ -120,7 +120,7 @@ export default function WorksheetsList() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
                   className="bg-white rounded-3xl border border-black/5 p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
-                  onClick={() => navigate(`/admin/worksheets/${ws.id}`)}
+                  onClick={() => navigate(`/dpp/${ws.id}`)}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="flex-1 space-y-2">
@@ -150,7 +150,7 @@ export default function WorksheetsList() {
                       )}
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={e => { e.stopPropagation(); navigate(`/admin/worksheets/${ws.id}`); }}
+                          onClick={e => { e.stopPropagation(); navigate(`/dpp/${ws.id}`); }}
                           className="flex items-center gap-1.5 border-2 border-[#1E1E1E] rounded-full px-4 py-2 text-sm font-bold hover:bg-[#1E1E1E] hover:text-white transition-all"
                         >
                           <Eye className="w-4 h-4" /> View

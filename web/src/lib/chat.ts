@@ -1,6 +1,6 @@
 /**
- * Chat store — conversations + messages persisted in localStorage.
- * Each user (by phone) gets a namespaced store. Replace with Cloud sync later.
+ * Chat store — conversations persisted in localStorage.
+ * Namespaced under a fixed "widget" key (no per-student identity).
  */
 
 export type Confidence = "verified" | "ai" | "low";
@@ -11,51 +11,33 @@ export interface ChatMessage {
   role: Role;
   content: string;
   createdAt: number;
-  confidence?: Confidence; // assistant only
-  source?: { book: string; chapter: string }; // assistant only
-  modelName?: string; // assistant only
-  rawAnswer?: string; // assistant only — clean markdown for copy (no follow-up lines)
-  imageUrl?: string; // user uploads (Plus/Pro)
-  // Edit tracking (one-time edit allowed per user message)
+  confidence?: Confidence;
+  source?: { book: string; chapter: string };
+  modelName?: string;
+  rawAnswer?: string;
+  imageUrl?: string;
   is_edited?: boolean;
   original_text?: string;
-  bookmarked?: boolean; // assistant only — user saved this answer for quick reference
+  bookmarked?: boolean;
 }
 
 export interface Conversation {
   id: string;
-  title: string; // first user question, up to CHAT_TITLE_MAX_LENGTH chars
-  subject?: string; // e.g. "Science", "Mathematics"
+  title: string;
+  subject?: string;
   createdAt: number;
   updatedAt: number;
   messages: ChatMessage[];
-  saved?: boolean; // true when any message in this conversation is bookmarked
+  saved?: boolean;
 }
 
-const PREFIX = "javaab.chat.";
-const QUOTA_PREFIX = "javaab.quota.";
+const STORE_KEY = "javaab.widget.chat";
 export const CHAT_TITLE_MAX_LENGTH = 25;
 
-/** Plan-based monthly query quotas. */
-export const PLAN_QUOTAS: Record<string, number> = {
-  free: 50,
-  plus: 1000,
-  pro: Infinity,
-};
-
-function key(phone: string) {
-  return `${PREFIX}${phone}`;
-}
-function quotaKey(phone: string) {
-  const d = new Date();
-  const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  return `${QUOTA_PREFIX}${phone}.${m}`;
-}
-
-/** Load all conversations for a phone (newest first). */
-export function loadConversations(phone: string): Conversation[] {
+/** Load all conversations (newest first). */
+export function loadConversations(): Conversation[] {
   try {
-    const raw = localStorage.getItem(key(phone));
+    const raw = localStorage.getItem(STORE_KEY);
     const arr: Conversation[] = raw ? JSON.parse(raw) : [];
     return arr.sort((a, b) => b.updatedAt - a.updatedAt);
   } catch {
@@ -63,15 +45,12 @@ export function loadConversations(phone: string): Conversation[] {
   }
 }
 
-function persist(phone: string, list: Conversation[]) {
-  localStorage.setItem(key(phone), JSON.stringify(list));
+function persist(list: Conversation[]) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(list));
   window.dispatchEvent(new Event("javaab:chat"));
 }
 
-export function createConversation(
-  phone: string,
-  subject?: string,
-): Conversation {
+export function createConversation(subject?: string): Conversation {
   const conv: Conversation = {
     id: crypto.randomUUID(),
     title: "New chat",
@@ -80,25 +59,23 @@ export function createConversation(
     updatedAt: Date.now(),
     messages: [],
   };
-  const list = loadConversations(phone);
+  const list = loadConversations();
   list.unshift(conv);
-  persist(phone, list);
+  persist(list);
   return conv;
 }
 
-export function deleteConversation(phone: string, id: string) {
-  const list = loadConversations(phone).filter((c) => c.id !== id);
-  persist(phone, list);
+export function deleteConversation(id: string) {
+  persist(loadConversations().filter((c) => c.id !== id));
 }
 
-/** Rename a conversation locally (optimistic update). */
-export function renameConversation(phone: string, id: string, title: string) {
-  const list = loadConversations(phone);
+export function renameConversation(id: string, title: string) {
+  const list = loadConversations();
   const idx = list.findIndex((c) => c.id === id);
   if (idx === -1) return;
   list[idx].title = title.trim().slice(0, CHAT_TITLE_MAX_LENGTH) || "New chat";
   list[idx].updatedAt = Date.now();
-  persist(phone, list);
+  persist(list);
 }
 
 export function formatChatTitle(title: string): string {
@@ -107,8 +84,8 @@ export function formatChatTitle(title: string): string {
   return `${cleanTitle.slice(0, CHAT_TITLE_MAX_LENGTH).trimEnd()}...`;
 }
 
-export function appendMessage(phone: string, convId: string, msg: ChatMessage) {
-  const list = loadConversations(phone);
+export function appendMessage(convId: string, msg: ChatMessage) {
+  const list = loadConversations();
   const idx = list.findIndex((c) => c.id === convId);
   if (idx === -1) return;
   const conv = list[idx];
@@ -118,19 +95,11 @@ export function appendMessage(phone: string, convId: string, msg: ChatMessage) {
     conv.title = formatChatTitle(msg.content);
   }
   list[idx] = conv;
-  persist(phone, list);
+  persist(list);
 }
 
-/**
- * Remove all messages after (not including) the given message id.
- * Used for the one-time edit "branch from here" flow.
- */
-export function truncateAfterMessage(
-  phone: string,
-  convId: string,
-  messageId: string,
-) {
-  const list = loadConversations(phone);
+export function truncateAfterMessage(convId: string, messageId: string) {
+  const list = loadConversations();
   const idx = list.findIndex((c) => c.id === convId);
   if (idx === -1) return;
   const conv = list[idx];
@@ -139,18 +108,16 @@ export function truncateAfterMessage(
   conv.messages = conv.messages.slice(0, msgIdx + 1);
   conv.updatedAt = Date.now();
   list[idx] = conv;
-  persist(phone, list);
+  persist(list);
 }
 
-/** Mark a message as edited and store the original text. */
 export function markMessageEdited(
-  phone: string,
   convId: string,
   messageId: string,
   newContent: string,
   originalText: string,
 ) {
-  const list = loadConversations(phone);
+  const list = loadConversations();
   const conv = list.find((c) => c.id === convId);
   if (!conv) return;
   const msg = conv.messages.find((m) => m.id === messageId);
@@ -159,37 +126,21 @@ export function markMessageEdited(
   msg.content = newContent;
   msg.is_edited = true;
   conv.updatedAt = Date.now();
-  persist(phone, list);
+  persist(list);
 }
 
-/**
- * Toggle bookmark on an assistant message. Marks the conversation as saved
- * when any message is bookmarked, clears it when none remain.
- */
-export function bookmarkMessage(phone: string, convId: string, messageId: string): boolean {
-  const list = loadConversations(phone);
+export function bookmarkMessage(convId: string, messageId: string): boolean {
+  const list = loadConversations();
   const conv = list.find((c) => c.id === convId);
   if (!conv) return false;
   const msg = conv.messages.find((m) => m.id === messageId);
   if (!msg) return false;
   msg.bookmarked = !msg.bookmarked;
   conv.saved = conv.messages.some((m) => m.bookmarked);
-  persist(phone, list);
+  persist(list);
   return msg.bookmarked;
 }
 
-/** Quota helpers — counts user-side messages this calendar month. */
-export function getUsage(phone: string): number {
-  const v = localStorage.getItem(quotaKey(phone));
-  return v ? Number(v) : 0;
-}
-export function bumpUsage(phone: string): number {
-  const next = getUsage(phone) + 1;
-  localStorage.setItem(quotaKey(phone), String(next));
-  return next;
-}
-
-/** Date-group helper for the sidebar. */
 export type DateBucket = "Today" | "Yesterday" | "This Week" | "Earlier";
 export function bucketOf(ts: number): DateBucket {
   const now = new Date();

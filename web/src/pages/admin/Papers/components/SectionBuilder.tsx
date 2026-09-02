@@ -74,7 +74,7 @@ function SortableSection({ id, section, index, onChange, onRemove }: SortableSec
             value={section.section_label}
             onChange={e => onChange({ ...section, section_label: e.target.value })}
             placeholder="Section A"
-            className="w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-[#FC8019] focus:ring-2 focus:ring-[#FC8019]/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all text-sm"
+            className="w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all text-sm"
           />
         </div>
         <div>
@@ -82,7 +82,7 @@ function SortableSection({ id, section, index, onChange, onRemove }: SortableSec
           <select
             value={section.question_type}
             onChange={e => onChange({ ...section, question_type: e.target.value as QuestionType })}
-            className="w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-[#FC8019] focus:ring-2 focus:ring-[#FC8019]/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all text-sm"
+            className="w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all text-sm"
           >
             {QUESTION_TYPES.map(t => (
               <option key={t.value} value={t.value}>{t.label}</option>
@@ -97,7 +97,7 @@ function SortableSection({ id, section, index, onChange, onRemove }: SortableSec
             max={50}
             value={section.num_questions}
             onChange={e => onChange({ ...section, num_questions: Math.max(1, Number(e.target.value)) })}
-            className="w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-[#FC8019] focus:ring-2 focus:ring-[#FC8019]/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all text-sm"
+            className="w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all text-sm"
           />
         </div>
         <div>
@@ -108,7 +108,7 @@ function SortableSection({ id, section, index, onChange, onRemove }: SortableSec
             max={20}
             value={section.marks_per_question}
             onChange={e => onChange({ ...section, marks_per_question: Math.max(1, Number(e.target.value)) })}
-            className="w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-[#FC8019] focus:ring-2 focus:ring-[#FC8019]/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all text-sm"
+            className="w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all text-sm"
           />
         </div>
         <div className="sm:col-span-2">
@@ -118,7 +118,7 @@ function SortableSection({ id, section, index, onChange, onRemove }: SortableSec
             value={section.instructions ?? ""}
             onChange={e => onChange({ ...section, instructions: e.target.value })}
             placeholder="e.g. Attempt any 5 of the following"
-            className="w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-[#FC8019] focus:ring-2 focus:ring-[#FC8019]/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all text-sm"
+            className="w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all text-sm"
           />
         </div>
       </div>
@@ -192,7 +192,7 @@ export default function SectionBuilder({ sections, onChange, targetMarks }: Prop
       <button
         type="button"
         onClick={addSection}
-        className="w-full border-2 border-dashed border-black/20 rounded-3xl py-4 text-[#4B5563] font-semibold hover:border-[#FC8019] hover:text-[#FC8019] transition-all flex items-center justify-center gap-2"
+        className="w-full border-2 border-dashed border-black/20 rounded-3xl py-4 text-[#4B5563] font-semibold hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
       >
         <Plus className="w-5 h-5" /> Add Section
       </button>

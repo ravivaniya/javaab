@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -47,6 +48,7 @@ interface Props {
 
 export default function TopupForm({ clientId, onClose }: Props) {
   const qc = useQueryClient();
+  const [succeeded, setSucceeded] = useState(false);
   const {
     register,
     handleSubmit,
@@ -66,8 +68,9 @@ export default function TopupForm({ clientId, onClose }: Props) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['client', clientId] });
       qc.invalidateQueries({ queryKey: ['clients'] });
+      qc.invalidateQueries({ queryKey: ['ledger', clientId] });
       reset();
-      onClose();
+      setSucceeded(true);
     },
   });
 
@@ -75,6 +78,25 @@ export default function TopupForm({ clientId, onClose }: Props) {
     setValue('credits', preset.credits, { shouldValidate: true });
     setValue('amount_inr', preset.amount_inr, { shouldValidate: true });
     setValue('note', `${preset.label} — ₹${preset.amount_inr.toLocaleString('en-IN')} / ${preset.credits.toLocaleString()} credits`);
+  }
+
+  if (succeeded) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded px-3 py-3">
+          Credits added successfully. Balance and ledger have been refreshed.
+        </p>
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-800 text-white text-sm rounded hover:bg-gray-700"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

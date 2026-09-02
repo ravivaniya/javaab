@@ -15,8 +15,8 @@ export default function PaperPreview({ html, isGenerating = false }: Props) {
   if (isGenerating) {
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-[400px] bg-white rounded-3xl border border-black/5">
-        <div className="w-12 h-12 rounded-full border-4 border-[#FC8019] border-t-transparent animate-spin mb-4" />
-        <p className="text-[#FC8019] font-bold text-lg">⚡ Generating your paper…</p>
+        <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin mb-4" />
+        <p className="text-primary font-bold text-lg">⚡ Generating your paper…</p>
         <p className="text-[#4B5563] text-sm mt-1">This may take 30–60 seconds</p>
         <div className="mt-6 space-y-2 w-64">
           {[80, 60, 90, 50].map((w, i) => (

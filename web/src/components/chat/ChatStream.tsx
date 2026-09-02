@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { TypingDots } from "./TypingDots";
-import { RateLimitCard } from "./RateLimitCard";
 import { ApiService } from "@/services/api";
 import type { ChatMessage, Confidence } from "@/lib/chat";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,6 @@ type StreamSource = {
   chapter?: string;
 };
 
-/** Map internal model deployment names to human-readable labels. */
 const MODEL_LABELS: Record<string, string> = {
   "gpt-41-nano": "Quick Answer",
   "gpt-41-mini": "GPT-4.1 Mini",
@@ -28,24 +26,17 @@ export interface ChatStreamRequest {
   classLevel: number;
   subject: string;
   language: string;
-  /** Sent on subsequent messages in a conversation to enable multi-turn context. */
   conversationId?: string;
-  /** Set when retrying a failed stream — backend skips usage increment. */
   retryOf?: string;
-  /** Set when streaming after a message edit — routes to PATCH endpoint. */
   editMessageId?: string;
 }
 
 interface Props {
   request: ChatStreamRequest;
-  userId: string;
-  plan: string;
-  usageCount: number;
   onComplete: (msg: ChatMessage) => void;
   onError?: (err: Error) => void;
 }
 
-/** Strip trailing "Would you like…" / "Want to try…" follow-up lines from rawAnswer. */
 function stripFollowUpLines(text: string): string {
   return text
     .split("\n")
@@ -57,7 +48,7 @@ function stripFollowUpLines(text: string): string {
     .trimEnd();
 }
 
-export function ChatStream({ request, userId, plan, usageCount, onComplete, onError }: Props) {
+export function ChatStream({ request, onComplete, onError }: Props) {
   const [content, setContent] = useState("");
   const [err, setErr] = useState<Error | null>(null);
   const [confidence, setConfidence] = useState<Confidence | undefined>();
@@ -66,8 +57,6 @@ export function ChatStream({ request, userId, plan, usageCount, onComplete, onEr
   const [fromCache, setFromCache] = useState(false);
   const [isDone, setIsDone] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  // Track the message id for retry
   const messageIdRef = useRef(crypto.randomUUID());
 
   const startStream = () => {
@@ -89,10 +78,9 @@ export function ChatStream({ request, userId, plan, usageCount, onComplete, onEr
           low: "low",
           none: "ai",
         };
-        const resolved = confMap[c] ?? "ai";
-        setConfidence(resolved);
+        setConfidence(confMap[c] ?? "ai");
         console.log(
-          `[javaab:confidence] chat_id=${convId ?? "unknown"} tag=${resolved} raw=${conf} score=${score ?? 0} from_cache=${fc ?? false} model=${model}`
+          `[javaab] conv=${convId ?? "?"} model=${model} conf=${conf} score=${score ?? 0} cache=${fc ?? false}`,
         );
       },
       onSources: (sources: Record<string, unknown>[]) => {
@@ -110,18 +98,16 @@ export function ChatStream({ request, userId, plan, usageCount, onComplete, onEr
     };
 
     if (request.editMessageId) {
-      // Branch-from-here: edit existing message
       ApiService.editMessageStream(
         request.conversationId!,
         request.editMessageId,
-        { user_id: userId, content: request.query },
+        { content: request.query },
         commonCallbacks,
       );
     } else {
       ApiService.askChatStream(
         {
           query: request.query,
-          user_id: userId,
           image_base64: request.imageBase64,
           board: request.board,
           class_level: request.classLevel,
@@ -161,11 +147,9 @@ export function ChatStream({ request, userId, plan, usageCount, onComplete, onEr
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [content]);
 
-  const modelLabel = modelName ? (MODEL_LABELS[modelName] ?? modelName) : undefined;
+  void fromCache; // used in metadata callback above
 
-  if (err && err.name === "RateLimitError") {
-    return <RateLimitCard used={usageCount} plan={plan} />;
-  }
+  const modelLabel = modelName ? (MODEL_LABELS[modelName] ?? modelName) : undefined;
 
   if (err) {
     return (
@@ -181,7 +165,6 @@ export function ChatStream({ request, userId, plan, usageCount, onComplete, onEr
     );
   }
 
-  // Still loading (no content yet)
   if (!content && !isDone) {
     return (
       <div className="flex w-full justify-start animate-fade-in mb-4">

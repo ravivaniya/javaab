@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { widgetConfig } from "@/config/widget.config";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, ChevronLeft, Zap, Upload, X } from "lucide-react";
 import { toast } from "sonner";
@@ -48,9 +49,7 @@ const INSTRUCTION_PRESETS = [
   },
 ];
 
-const LS_INSTITUTE = "javaab:institute_name";
-
-const INPUT_CLS = "w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-[#FC8019] focus:ring-2 focus:ring-[#FC8019]/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all";
+const INPUT_CLS = "w-full rounded-2xl border border-black/10 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 bg-white text-[#1E1E1E] font-medium outline-none transition-all";
 
 export default function CreatePaper() {
   const navigate = useNavigate();
@@ -74,21 +73,14 @@ export default function CreatePaper() {
 
   const [sections, setSections] = useState<SectionConfig[]>(CBSE_10_STANDARD);
 
-  const [instituteName, setInstituteName] = useState("");
-  const [instituteLogoUrl, setInstituteLogoUrl] = useState("");
+  const [instituteName, setInstituteName] = useState(widgetConfig.institute.name);
+  const [instituteLogoUrl, setInstituteLogoUrl] = useState(widgetConfig.institute.logo_url ?? "");
   const [paperInstructions, setPaperInstructions] = useState("");
   const [includeAnswerKey, setIncludeAnswerKey] = useState(true);
   const [includeMarkingScheme, setIncludeMarkingScheme] = useState(true);
 
-  // Load saved institute name from localStorage on first render
-  useEffect(() => {
-    const saved = localStorage.getItem(LS_INSTITUTE);
-    if (saved) setInstituteName(saved);
-  }, []);
-
   const handleInstituteNameChange = (value: string) => {
     setInstituteName(value);
-    localStorage.setItem(LS_INSTITUTE, value);
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,7 +149,7 @@ export default function CreatePaper() {
     setSubmitting(true);
     try {
       const res = await ApiService.generatePaper(config);
-      navigate(`/admin/papers/${res.paper_id}`);
+      navigate(`/question-paper/${res.paper_id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Generation failed");
       setSubmitting(false);
@@ -177,11 +169,11 @@ export default function CreatePaper() {
             return (
               <div key={label} className="flex items-center flex-1 last:flex-none">
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 font-bold text-sm transition-all
-                  ${done ? "bg-[#FC8019] border-[#FC8019] text-white" : current ? "border-[#FC8019] text-[#FC8019]" : "border-black/20 text-[#4B5563]"}`}>
+                  ${done ? "bg-primary border-primary text-white" : current ? "border-primary text-primary" : "border-black/20 text-[#4B5563]"}`}>
                   {done ? "✓" : n}
                 </div>
-                <span className={`ml-2 text-sm font-medium hidden sm:block ${current ? "text-[#FC8019]" : "text-[#4B5563]"}`}>{label}</span>
-                {i < STEPS.length - 1 && <div className={`flex-1 h-0.5 mx-3 ${done ? "bg-[#FC8019]" : "bg-black/10"}`} />}
+                <span className={`ml-2 text-sm font-medium hidden sm:block ${current ? "text-primary" : "text-[#4B5563]"}`}>{label}</span>
+                {i < STEPS.length - 1 && <div className={`flex-1 h-0.5 mx-3 ${done ? "bg-primary" : "bg-black/10"}`} />}
               </div>
             );
           })}
@@ -208,7 +200,7 @@ export default function CreatePaper() {
                       {(["CBSE", "GSEB"] as const).map(b => (
                         <button key={b} type="button"
                           onClick={() => { setBoard(b); setSubject(""); setChapters([]); }}
-                          className={`rounded-2xl border-2 p-4 text-left transition-all ${board === b ? "border-[#FC8019] bg-[#FC8019]/5 text-[#FC8019]" : "border-black/10 text-[#1E1E1E] hover:border-black/30"}`}>
+                          className={`rounded-2xl border-2 p-4 text-left transition-all ${board === b ? "border-primary bg-primary/5 text-primary" : "border-black/10 text-[#1E1E1E] hover:border-black/30"}`}>
                           <div className="font-bold">{b}</div>
                           <div className="text-xs mt-0.5 opacity-70">{b === "CBSE" ? "NCERT syllabus" : "Gujarat Board"}</div>
                         </button>
@@ -222,7 +214,7 @@ export default function CreatePaper() {
                       {[6, 7, 8, 9, 10, 11, 12].map(n => (
                         <button key={n} type="button"
                           onClick={() => { setClassLevel(n); setSubject(""); setChapters([]); }}
-                          className={`w-10 h-10 rounded-full font-bold text-sm transition-all ${classLevel === n ? "bg-[#FC8019] text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-[#FC8019]/10"}`}>
+                          className={`w-10 h-10 rounded-full font-bold text-sm transition-all ${classLevel === n ? "bg-primary text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-primary/10"}`}>
                           {n}
                         </button>
                       ))}
@@ -259,7 +251,7 @@ export default function CreatePaper() {
                     <div className="flex gap-2">
                       {[["en", "English"], ["hi", "हिन्दी"], ["gu", "ગુજરાતી"]].map(([code, label]) => (
                         <button key={code} type="button" onClick={() => setLanguage(code)}
-                          className={`flex-1 py-2 px-3 rounded-full font-medium text-sm transition-all ${language === code ? "bg-[#FC8019] text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-[#FC8019]/10"}`}>
+                          className={`flex-1 py-2 px-3 rounded-full font-medium text-sm transition-all ${language === code ? "bg-primary text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-primary/10"}`}>
                           {label}
                         </button>
                       ))}
@@ -270,7 +262,7 @@ export default function CreatePaper() {
                     <div className="flex gap-2">
                       {([[1, "1 Set"], [2, "2 Sets (A, B)"], [3, "3 Sets (A, B, C)"]] as [number, string][]).map(([n, label]) => (
                         <button key={n} type="button" onClick={() => setVariants(n)}
-                          className={`flex-1 py-2 px-3 rounded-full font-medium text-xs transition-all ${variants === n ? "bg-[#FC8019] text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-[#FC8019]/10"}`}>
+                          className={`flex-1 py-2 px-3 rounded-full font-medium text-xs transition-all ${variants === n ? "bg-primary text-white" : "bg-[#F3F4F6] text-[#1E1E1E] hover:bg-primary/10"}`}>
                           {label}
                         </button>
                       ))}
@@ -368,7 +360,7 @@ export default function CreatePaper() {
                     </div>
                   ) : (
                     <button type="button" onClick={() => logoInputRef.current?.click()}
-                      className="flex items-center gap-2 w-full rounded-2xl border-2 border-dashed border-black/15 px-4 py-4 text-sm font-medium text-[#4B5563] hover:border-[#FC8019] hover:text-[#FC8019] transition-all">
+                      className="flex items-center gap-2 w-full rounded-2xl border-2 border-dashed border-black/15 px-4 py-4 text-sm font-medium text-[#4B5563] hover:border-primary hover:text-primary transition-all">
                       <Upload className="w-4 h-4" />
                       Upload logo (PNG / JPG, max 500 KB)
                     </button>
@@ -382,7 +374,7 @@ export default function CreatePaper() {
                     <div className="flex gap-1">
                       {INSTRUCTION_PRESETS.map(p => (
                         <button key={p.label} type="button" onClick={() => setPaperInstructions(p.text)}
-                          className="text-xs px-2.5 py-1 rounded-full border border-black/15 hover:border-[#FC8019] hover:text-[#FC8019] transition-all font-medium">
+                          className="text-xs px-2.5 py-1 rounded-full border border-black/15 hover:border-primary hover:text-primary transition-all font-medium">
                           {p.label}
                         </button>
                       ))}
@@ -402,7 +394,7 @@ export default function CreatePaper() {
                     <label key={label} className="flex items-center justify-between cursor-pointer">
                       <span className="text-sm font-medium text-[#1E1E1E]">{label}</span>
                       <div onClick={() => set(!checked)}
-                        className={`relative w-11 h-6 rounded-full transition-all cursor-pointer ${checked ? "bg-[#FC8019]" : "bg-[#D1D5DB]"}`}>
+                        className={`relative w-11 h-6 rounded-full transition-all cursor-pointer ${checked ? "bg-primary" : "bg-[#D1D5DB]"}`}>
                         <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${checked ? "translate-x-6" : "translate-x-1"}`} />
                       </div>
                     </label>
@@ -444,7 +436,7 @@ export default function CreatePaper() {
                 </div>
 
                 <button onClick={handleGenerate} disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 bg-[#FC8019] text-white rounded-full font-bold py-4 hover:bg-[#E67315] hover:-translate-y-0.5 transition-all shadow-[0_8px_32px_rgba(252,128,25,0.15)] disabled:opacity-60 disabled:cursor-not-allowed">
+                  className="w-full flex items-center justify-center gap-2 bg-primary text-white rounded-full font-bold py-4 hover:opacity-90 hover:-translate-y-0.5 transition-all  disabled:opacity-60 disabled:cursor-not-allowed">
                   {submitting
                     ? <span className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
                     : <Zap className="w-5 h-5" />}
@@ -464,7 +456,7 @@ export default function CreatePaper() {
             <ChevronLeft className="w-4 h-4" /> Back
           </button>
           <button type="button" onClick={next}
-            className="flex items-center gap-2 bg-[#FC8019] text-white rounded-full px-6 py-3 font-bold text-sm hover:bg-[#E67315] hover:-translate-y-0.5 transition-all">
+            className="flex items-center gap-2 bg-primary text-white rounded-full px-6 py-3 font-bold text-sm hover:opacity-90 hover:-translate-y-0.5 transition-all">
             Next: {STEPS[step]} <ChevronRight className="w-4 h-4" />
           </button>
         </div>

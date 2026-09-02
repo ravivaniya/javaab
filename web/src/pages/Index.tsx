@@ -1,13 +1,12 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { usePendingPlan } from "@/hooks/usePendingPlan";
+import { widgetConfig } from "@/config/widget.config";
 
-/** Root: route based on auth state. */
+/** Root: redirect to the first enabled feature. */
 const Index = () => {
-  usePendingPlan();
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
-  if (!user.isOnboarded) return <Navigate to="/onboarding" replace />;
+  const { chat, qpg, dpp } = widgetConfig.features;
+  if (chat) return <Navigate to="/chat" replace />;
+  if (qpg) return <Navigate to="/question-paper" replace />;
+  if (dpp) return <Navigate to="/dpp" replace />;
   return <Navigate to="/chat" replace />;
 };
 

@@ -2,108 +2,82 @@ import { useCallback, useEffect, useState } from "react";
 import {
   appendMessage,
   bookmarkMessage,
-  bumpUsage,
   ChatMessage,
   Conversation,
   createConversation,
   deleteConversation,
-  getUsage,
   loadConversations,
   markMessageEdited,
-  PLAN_QUOTAS,
   renameConversation,
   truncateAfterMessage,
 } from "@/lib/chat";
-import { useAuth } from "./useAuth";
 import { ApiService } from "@/services/api";
+import { widgetConfig } from "@/config/widget.config";
 import type { ChatStreamRequest } from "@/components/chat/ChatStream";
 
-/** Reactive chat state for the current authed user. */
+/** Reactive chat state for the widget (no per-student identity). */
 export function useChat() {
-  const { user } = useAuth();
-  const phone = user?.phone ?? "";
   const [conversations, setConversations] = useState<Conversation[]>(() =>
-    phone ? loadConversations(phone) : [],
+    loadConversations(),
   );
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [usage, setUsage] = useState<number>(() => (phone ? getUsage(phone) : 0));
   const [streamRequest, setStreamRequest] = useState<ChatStreamRequest | null>(null);
   const [streamConversationId, setStreamConversationId] = useState<string | null>(null);
   const [isResponding, setIsResponding] = useState(false);
-  /** Cumulative word count for the active conversation (tracked client-side too). */
-  const [sessionWordCount, setSessionWordCount] = useState(0);
 
-  // Sync from storage on cross-tab edits
+  const reload = () => setConversations(loadConversations());
+
   useEffect(() => {
-    if (!phone) return;
-    const sync = () => {
-      setConversations(loadConversations(phone));
-      setUsage(getUsage(phone));
-    };
+    const sync = () => reload();
     window.addEventListener("javaab:chat", sync);
     window.addEventListener("storage", sync);
     return () => {
       window.removeEventListener("javaab:chat", sync);
       window.removeEventListener("storage", sync);
     };
-  }, [phone]);
+  }, []);
 
-  // Reset session word count when active conversation changes
-  useEffect(() => {
-    setSessionWordCount(0);
-  }, [activeId]);
-
-  const quota = PLAN_QUOTAS[user?.plan ?? "free"];
-  const remaining = quota === Infinity ? Infinity : Math.max(0, quota - usage);
-  const limitReached = remaining === 0;
   const active = conversations.find((c) => c.id === activeId) ?? null;
 
   const newChat = useCallback(() => {
-    if (!phone) return null;
-    const c = createConversation(phone);
-    setConversations(loadConversations(phone));
+    const c = createConversation();
+    reload();
     setActiveId(c.id);
-    setSessionWordCount(0);
     return c;
-  }, [phone]);
+  }, []);
 
   const removeChat = useCallback(
     (id: string) => {
-      if (!phone) return;
-      deleteConversation(phone, id);
-      setConversations(loadConversations(phone));
+      deleteConversation(id);
+      reload();
       if (activeId === id) setActiveId(null);
     },
-    [phone, activeId],
+    [activeId],
   );
 
   const renameChat = useCallback(
     async (id: string, newTitle: string) => {
-      if (!phone) return;
       const conv = conversations.find((c) => c.id === id);
       const prevTitle = conv?.title ?? "";
-      // Optimistic update
-      renameConversation(phone, id, newTitle);
-      setConversations(loadConversations(phone));
+      renameConversation(id, newTitle);
+      reload();
       try {
-        await ApiService.updateConversationTitle(id, phone, newTitle);
+        await ApiService.updateConversationTitle(id, newTitle);
       } catch {
-        // Revert on failure
-        renameConversation(phone, id, prevTitle);
-        setConversations(loadConversations(phone));
+        renameConversation(id, prevTitle);
+        reload();
       }
     },
-    [phone, conversations],
+    [conversations],
   );
 
   const send = useCallback(
     async (text: string, imageUrl?: string) => {
-      if (!phone || !text.trim() || isResponding) return;
-      if (limitReached) return;
+      if (!text.trim() || isResponding) return;
 
       let convId = activeId;
       if (!convId) {
-        const c = createConversation(phone);
+        const c = createConversation();
         convId = c.id;
         setActiveId(c.id);
       }
@@ -115,88 +89,68 @@ export function useChat() {
         createdAt: Date.now(),
         imageUrl,
       };
-      appendMessage(phone, convId, userMsg);
-      const newUsage = bumpUsage(phone);
-      setUsage(newUsage);
-      setConversations(loadConversations(phone));
-
-      const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
-      setSessionWordCount((prev) => prev + wordCount);
+      appendMessage(convId, userMsg);
+      reload();
 
       setIsResponding(true);
       setStreamConversationId(convId);
       setStreamRequest({
         query: text.trim(),
         imageBase64: imageUrl,
-        board: user?.board || "cbse",
-        classLevel: user?.classNum || 10,
+        board: widgetConfig.defaults.board,
+        classLevel: widgetConfig.defaults.class_level,
         subject: active?.subject || "",
-        language: user?.languages?.[0] || "en",
+        language: widgetConfig.defaults.language,
         conversationId: convId,
       });
     },
-    [phone, activeId, isResponding, limitReached, user, active?.subject],
+    [activeId, isResponding, active?.subject],
   );
 
-  /** Called when edit-mode resubmits a user message (branch from here). */
   const sendEdit = useCallback(
     (convId: string, messageId: string, newContent: string, originalContent: string) => {
-      if (!phone || isResponding) return;
-
-      // Optimistic: mark edited and trim downstream messages
-      markMessageEdited(phone, convId, messageId, newContent, originalContent);
-      truncateAfterMessage(phone, convId, messageId);
-      setConversations(loadConversations(phone));
-
+      if (isResponding) return;
+      markMessageEdited(convId, messageId, newContent, originalContent);
+      truncateAfterMessage(convId, messageId);
+      reload();
       setIsResponding(true);
       setStreamConversationId(convId);
       setStreamRequest({
         query: newContent,
-        board: user?.board || "cbse",
-        classLevel: user?.classNum || 10,
+        board: widgetConfig.defaults.board,
+        classLevel: widgetConfig.defaults.class_level,
         subject: active?.subject || "",
-        language: user?.languages?.[0] || "en",
+        language: widgetConfig.defaults.language,
         conversationId: convId,
         editMessageId: messageId,
       });
     },
-    [phone, isResponding, user, active?.subject],
+    [isResponding, active?.subject],
   );
 
   const onStreamComplete = useCallback(
     (msg: ChatMessage) => {
       const convId = streamConversationId || activeId;
-      if (!phone || !convId) return;
-      appendMessage(phone, convId, msg);
-      setConversations(loadConversations(phone));
+      if (!convId) return;
+      appendMessage(convId, msg);
+      reload();
       setStreamRequest(null);
       setStreamConversationId(null);
       setIsResponding(false);
     },
-    [phone, activeId, streamConversationId],
+    [activeId, streamConversationId],
   );
 
-  const onStreamError = useCallback((err: Error) => {
-    console.error("Stream Error", err);
+  const onStreamError = useCallback(() => {
     setIsResponding(false);
   }, []);
 
-  /** Toggle bookmark on an assistant message. Syncs to backend async. */
   const bookmarkChat = useCallback(
     (convId: string, messageId: string) => {
-      if (!phone) return;
-      const conv = conversations.find((c) => c.id === convId);
-      const msg = conv?.messages.find((m) => m.id === messageId);
-      bookmarkMessage(phone, convId, messageId);
-      setConversations(loadConversations(phone));
-      ApiService.bookmarkMessage(
-        messageId,
-        convId,
-        phone,
-        msg?.rawAnswer ?? msg?.content,
-      ).catch(console.error);
+      bookmarkMessage(convId, messageId);
+      reload();
     },
-    [phone, conversations],
+    [],
   );
 
   return {
@@ -214,11 +168,6 @@ export function useChat() {
     onStreamError,
     setStreamRequest,
     isResponding,
-    usage,
-    quota,
-    remaining,
-    limitReached,
-    sessionWordCount,
     bookmarkChat,
   };
 }

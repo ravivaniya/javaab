@@ -54,7 +54,7 @@ export default function WorksheetDetail() {
     if (!ws) return;
     try {
       const res = await ApiService.generateWorksheet(ws.config);
-      navigate(`/admin/worksheets/${res.worksheet_id}`);
+      navigate(`/dpp/${res.worksheet_id}`);
     } catch {
       toast.error("Failed to start regeneration");
     }
@@ -63,7 +63,7 @@ export default function WorksheetDetail() {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-4 border-[#FC8019] border-t-transparent animate-spin" />
+        <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -72,7 +72,7 @@ export default function WorksheetDetail() {
     return (
       <div className="p-8 text-center">
         <p className="text-[#4B5563]">Worksheet not found.</p>
-        <Link to="/admin/worksheets" className="text-[#FC8019] font-bold mt-2 inline-block">← Back</Link>
+        <Link to="/dpp" className="text-primary font-bold mt-2 inline-block">← Back</Link>
       </div>
     );
   }
@@ -81,7 +81,7 @@ export default function WorksheetDetail() {
     <div className="flex flex-col lg:flex-row h-full min-h-screen">
       {/* Left panel */}
       <div className="lg:w-[40%] p-4 sm:p-6 border-b lg:border-b-0 lg:border-r border-black/5 space-y-5 overflow-y-auto">
-        <Link to="/admin/worksheets" className="inline-flex items-center gap-2 text-sm text-[#4B5563] hover:text-[#FC8019] font-medium transition-colors">
+        <Link to="/dpp" className="inline-flex items-center gap-2 text-sm text-[#4B5563] hover:text-primary font-medium transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to Worksheets
         </Link>
 
@@ -147,7 +147,7 @@ export default function WorksheetDetail() {
 
         <button
           onClick={handleRegenerate}
-          className="flex items-center gap-2 border-2 border-black/20 rounded-full px-5 py-2.5 font-semibold text-sm text-[#4B5563] hover:border-[#FC8019] hover:text-[#FC8019] transition-all"
+          className="flex items-center gap-2 border-2 border-black/20 rounded-full px-5 py-2.5 font-semibold text-sm text-[#4B5563] hover:border-primary hover:text-primary transition-all"
         >
           <RefreshCw className="w-4 h-4" /> ⟳ Regenerate
         </button>

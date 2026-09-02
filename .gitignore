@@ -65,3 +65,5 @@ web/build/
 web/.vite/
 web/coverage/
 .eslintcache
+
+azure

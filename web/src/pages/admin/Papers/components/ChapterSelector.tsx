@@ -24,7 +24,7 @@ export default function ChapterSelector({ chapters, selected, onChange }: Props)
             type="checkbox"
             checked={allSelected}
             onChange={toggleAll}
-            className="accent-[#FC8019] w-4 h-4"
+            className="accent-primary w-4 h-4"
           />
           <span className="text-sm font-bold text-[#1E1E1E]">Select All ({chapters.length})</span>
         </label>
@@ -34,7 +34,7 @@ export default function ChapterSelector({ chapters, selected, onChange }: Props)
               type="checkbox"
               checked={selected.includes(ch)}
               onChange={() => toggle(ch)}
-              className="accent-[#FC8019] w-4 h-4 mt-0.5 shrink-0"
+              className="accent-primary w-4 h-4 mt-0.5 shrink-0"
               data-testid={`chapter-${idx}`}
             />
             <span className="text-sm text-[#4B5563] leading-tight">{ch}</span>
@@ -55,13 +55,13 @@ export default function ChapterSelector({ chapters, selected, onChange }: Props)
             {selected.map(ch => (
               <span
                 key={ch}
-                className="inline-flex items-center gap-1 bg-[#FC8019]/10 text-[#FC8019] text-xs font-semibold px-3 py-1 rounded-full"
+                className="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full"
               >
                 {ch.length > 30 ? ch.slice(0, 28) + "…" : ch}
                 <button
                   type="button"
                   onClick={() => toggle(ch)}
-                  className="hover:text-[#E67315] ml-1 font-bold"
+                  className="hover:text-primary/80 ml-1 font-bold"
                   aria-label={`Remove ${ch}`}
                 >
                   ×
